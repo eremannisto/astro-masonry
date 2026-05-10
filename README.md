@@ -29,7 +29,7 @@ yarn add @mannisto/astro-masonry
 import { Masonry } from "@mannisto/astro-masonry/components"
 ---
 
-<Masonry columns={3} gap="1.5rem" aria={{ label: "Photo gallery" }}>
+<Masonry columns={3} aria={{ label: "Photo gallery" }}>
   {photos.map((photo) => (
     <div class="card">
       <img src={photo.src} alt={photo.alt} />
@@ -38,8 +38,6 @@ import { Masonry } from "@mannisto/astro-masonry/components"
   ))}
 </Masonry>
 ```
-
-Items are slotted in and automatically distributed across columns. Each item is **moved, not cloned** — event listeners on slotted elements are always preserved.
 
 ## Props
 
@@ -52,7 +50,7 @@ Items are slotted in and automatically distributed across columns. Each item is 
 | `aria` | `{ label?, role? }` | — | Adds `aria-label` and `role` to the root element |
 | `class` | `string` | — | Extra class names on the root element |
 
-> `breakpoints` and `columnMinWidth` are mutually exclusive — using both at the same time throws an error.
+> `breakpoints` and `columnMinWidth` are mutually exclusive — using both throws an error.
 
 ## Breakpoints
 
@@ -60,7 +58,7 @@ Define column counts at specific viewport widths. The `columns` prop sets the ba
 
 ```astro
 <!-- 1 column by default, 2 from 640px, 3 from 1024px -->
-<Masonry columns={1} breakpoints={{ 640: 2, 1024: 3 }} gap="1rem">
+<Masonry columns={1} breakpoints={{ 640: 2, 1024: 3 }}>
   <div>Item one</div>
   <div>Item two</div>
 </Masonry>
@@ -72,7 +70,7 @@ Let the component decide how many columns fit based on a minimum width. Column c
 
 ```astro
 <!-- as many ~280px columns as the container fits -->
-<Masonry columnMinWidth={280} gap="1rem">
+<Masonry columnMinWidth={280}>
   <div>Item one</div>
   <div>Item two</div>
 </Masonry>
@@ -89,14 +87,14 @@ When focus is inside the grid, arrow keys move between items:
 | `ArrowLeft` | Item in the previous column at the same vertical position |
 | `ArrowRight` | Item in the next column at the same vertical position |
 
-Focus is placed on the first focusable descendant inside the target item (link, button, etc.), or the item itself if none exists.
-
 ## Accessibility
 
-- Before layout completes, items are in `[data-masonry-slot]` and readable by screen readers in their original slot order
-- After layout, the slot is removed from the DOM — items exist exactly once, inside the grid columns
-- The grid is hidden with `visibility: hidden` until layout is ready, preventing a flash of empty columns
-- The `aria` prop passes `aria-label` and `role` directly to the root element
+- Screen readers navigate items in column order, which matches the visual layout
+- The `aria` prop accepts `label` and `role` for landmark and feed semantics
+
+```astro
+<Masonry aria={{ label: "Photo gallery", role: "feed" }}>
+```
 
 ## License
 
