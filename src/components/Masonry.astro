@@ -1,0 +1,455 @@
+---
+import type { HTMLAttributes } from "astro/types"
+
+/** Maps minimum viewport width in px to column count. E.g. `{ 768: 2, 1024: 3 }` */
+type Breakpoints = Record<number, number>
+
+interface AriaProps {
+  label?: string
+  role?: HTMLAttributes<"div">["role"]
+}
+
+interface Props {
+  columns?: number
+  gap?: number | string
+  breakpoints?: Breakpoints
+  columnMinWidth?: number | string
+  aria?: AriaProps
+  class?: string
+}
+
+const {
+  columns = 1,
+  gap: rawGap = "1rem",
+  breakpoints,
+  columnMinWidth,
+  aria,
+  class: className,
+} = Astro.props
+
+// Validate mutually exclusive props
+if (breakpoints !== undefined && columnMinWidth !== undefined) {
+  throw new Error(
+    "[@mannisto/astro-masonry] Cannot use both `breakpoints` and `columnMinWidth` — pick one."
+  )
+}
+
+// Derive the maximum column count so we can pre-render the right number of
+// column containers. With columnMinWidth we can't know this statically, so
+// we render a generous upper bound and let JS hide the surplus.
+const maxColumns = breakpoints
+  ? Math.max(columns, ...(Object.values(breakpoints) as number[]))
+  : columnMinWidth !== undefined
+    ? 12
+    : columns
+
+// Normalise gap and columnMinWidth to CSS strings
+const gap = typeof rawGap === "number" ? `${rawGap}px` : rawGap
+const minWidth =
+  columnMinWidth !== undefined
+    ? typeof columnMinWidth === "number"
+      ? `${columnMinWidth}px`
+      : columnMinWidth
+    : undefined
+
+const gridRole = aria?.role ?? undefined
+const gridLabel = aria?.label ?? undefined
+---
+
+<div
+  class:list={[className]}
+  data-masonry
+  role={gridRole}
+  aria-label={gridLabel}
+  style={`--masonry-gap: ${gap};`}
+>
+  {/*
+    [data-masonry-slot] holds slotted items before JS runs.
+    It renders as a single stacked column — a reasonable no-JS fallback.
+    Once JS has distributed items into columns it is removed from the DOM
+    entirely, so there is no duplication for screen readers or keyboard users.
+  */}
+  <div data-masonry-slot>
+    <slot />
+  </div>
+
+  {/*
+    [data-masonry-grid] holds the visible columns after JS runs.
+    Hidden until layout completes to prevent a flash of empty columns.
+  */}
+  <div
+    data-masonry-grid
+    data-columns={columns}
+    data-min-width={minWidth}
+    data-breakpoints={breakpoints ? JSON.stringify(breakpoints) : undefined}
+  >
+    {Array.from({ length: maxColumns }).map((_, i) => (
+      <div data-masonry-column data-index={i} />
+    ))}
+  </div>
+</div>
+
+<style>
+  [data-masonry] {
+    container-type: inline-size;
+  }
+
+  [data-masonry-slot] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--masonry-gap);
+  }
+
+  [data-masonry-grid] {
+    display: flex;
+    visibility: hidden;
+    gap: var(--masonry-gap);
+    align-items: flex-start;
+  }
+
+  /*
+    Once JS has run and set [data-masonry-ready], swap slot out and grid in.
+    The slot node is removed from the DOM entirely by the script, but
+    display: none here acts as a safe fallback in case of a race.
+  */
+  [data-masonry][data-masonry-ready] [data-masonry-slot] {
+    display: none;
+  }
+
+  [data-masonry][data-masonry-ready] [data-masonry-grid] {
+    visibility: visible;
+  }
+
+  [data-masonry-column] {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--masonry-gap);
+    min-width: 0;
+  }
+</style>
+
+<script>
+  /** Selector for the first focusable descendant within a masonry item. */
+  const FOCUSABLE_SELECTOR =
+    'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+  /** Radix for parsing integer data attributes. */
+  const DECIMAL = 10;
+
+  class MasonryInstance {
+    private root: HTMLElement;
+    private grid: HTMLElement;
+    private slot: HTMLElement;
+    private columns: HTMLElement[];
+    private items: HTMLElement[];
+    private resizeObserver: ResizeObserver;
+
+    /**
+     * @param {HTMLElement} root - The masonry root element for this instance.
+     */
+    constructor(root: HTMLElement) {
+      this.root = root;
+      this.grid = root.querySelector("[data-masonry-grid]")!;
+      this.slot = root.querySelector("[data-masonry-slot]")!;
+      this.columns = Array.from(root.querySelectorAll("[data-masonry-column]"));
+      this.items = Array.from(this.slot.children) as HTMLElement[];
+
+      this.resizeObserver = new ResizeObserver(() => {
+        this.layout();
+      });
+
+      this.init();
+    }
+
+    /**
+     * Attaches observers and defers the first layout until all images within
+     * the slot have finished loading, so that height measurements are accurate.
+     *
+     * @returns {void}
+     */
+    private init(): void {
+      const images = this.slot.querySelectorAll<HTMLImageElement>("img");
+      const pending = Array.from(images).filter((img) => !img.complete);
+
+      if (pending.length === 0) {
+        this.layout();
+      } else {
+        let loaded = 0;
+
+        const onLoad = (): void => {
+          loaded++;
+
+          if (loaded === pending.length) {
+            this.layout();
+          }
+        };
+
+        pending.forEach((img) => {
+          img.addEventListener("load", onLoad, { once: true });
+          img.addEventListener("error", onLoad, { once: true });
+        });
+      }
+
+      this.resizeObserver.observe(this.root);
+      this.root.addEventListener("keydown", this.handleKeyDown.bind(this));
+    }
+
+    /**
+     * Moves items from the slot into columns using a shortest-column algorithm,
+     * then removes the slot node from the DOM so items exist exactly once.
+     * On subsequent layouts (resize), items are staged back into the slot
+     * temporarily for measurement before being redistributed.
+     *
+     * @returns {void}
+     */
+    private layout(): void {
+      const columnCount = this.getColumnCount();
+
+      this.columns.forEach((col, i) => {
+        col.style.display = i < columnCount ? "flex" : "none";
+
+        while (col.firstChild) {
+          col.firstChild.remove();
+        }
+      });
+
+      // Stage items in the slot for measurement. On first layout they are
+      // already there. On subsequent layouts they are moved back from columns.
+      if (!this.slot.parentNode) {
+        this.root.insertBefore(this.slot, this.grid);
+      }
+
+      this.items.forEach((item) => {
+        this.slot.appendChild(item);
+      });
+
+      // Force a synchronous reflow so getBoundingClientRect() returns
+      // up-to-date values for items sitting in the slot container.
+      void this.grid.offsetHeight;
+
+      const activeColumns = this.columns.slice(0, columnCount);
+      const heights = new Array(columnCount).fill(0) as number[];
+
+      this.items.forEach((item) => {
+        const shortestIndex = heights.indexOf(Math.min(...heights));
+        activeColumns[shortestIndex].appendChild(item);
+        heights[shortestIndex] += item.getBoundingClientRect().height;
+      });
+
+      // Remove the slot container from the DOM so items exist exactly once —
+      // no duplication for screen readers or keyboard tab order.
+      if (this.slot.parentNode) {
+        this.slot.parentNode.removeChild(this.slot);
+      }
+
+      this.root.dataset.masonryReady = "true";
+    }
+
+    /**
+     * Resolves the current column count from either `columnMinWidth` or
+     * `breakpoints` data attributes, falling back to the base `columns` value.
+     *
+     * @returns {number} The number of columns to display.
+     */
+    private getColumnCount(): number {
+      const gridData = this.grid.dataset;
+      const minWidth = gridData.minWidth;
+
+      if (minWidth) {
+        const minPx = parseFloat(minWidth);
+        const rootWidth = this.root.getBoundingClientRect().width;
+        return Math.max(1, Math.floor(rootWidth / minPx));
+      }
+
+      const base = parseInt(gridData.columns ?? "1", DECIMAL);
+      const breakpointsRaw = gridData.breakpoints;
+
+      if (!breakpointsRaw) {
+        return base;
+      }
+
+      const breakpoints: Record<string, number> = JSON.parse(breakpointsRaw);
+      const windowWidth = window.innerWidth;
+
+      const sorted = Object.entries(breakpoints)
+        .map(([key, val]) => ({ minWidth: parseInt(key, DECIMAL), columns: val }))
+        .sort((a, b) => b.minWidth - a.minWidth);
+
+      for (const bp of sorted) {
+        if (windowWidth >= bp.minWidth) {
+          return bp.columns;
+        }
+      }
+
+      return base;
+    }
+
+    /**
+     * Returns all columns that are currently visible.
+     *
+     * @returns {HTMLElement[]}
+     */
+    private getActiveColumns(): HTMLElement[] {
+      return this.columns.filter((col) => col.style.display !== "none");
+    }
+
+    /**
+     * Returns the column element that directly contains the given item,
+     * or null if the item is not inside a column.
+     *
+     * @param {HTMLElement} item
+     * @returns {HTMLElement | null}
+     */
+    private getItemColumn(item: HTMLElement): HTMLElement | null {
+      return (item.closest("[data-masonry-column]") as HTMLElement) ?? null;
+    }
+
+    /**
+     * Handles arrow key navigation across the masonry grid.
+     *
+     * - ArrowUp / ArrowDown move within the current column.
+     * - ArrowLeft / ArrowRight move to the adjacent column, targeting the item
+     *   that occupies the same vertical position as the current item's top edge.
+     *
+     * @param {KeyboardEvent} e
+     * @returns {void}
+     */
+    private handleKeyDown(e: KeyboardEvent): void {
+      const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+
+      if (!arrows.includes(e.key)) {
+        return;
+      }
+
+      const focused = document.activeElement as HTMLElement;
+
+      if (!focused) {
+        return;
+      }
+
+      // The focused element may be a child inside an item (e.g. a link inside
+      // a card), so walk up to the direct column child.
+      const currentItem = focused.closest<HTMLElement>("[data-masonry-column] > *");
+
+      if (!currentItem) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const currentColumn = this.getItemColumn(currentItem);
+
+      if (!currentColumn) {
+        return;
+      }
+
+      const activeColumns = this.getActiveColumns();
+      const columnIndex = activeColumns.indexOf(currentColumn);
+      const itemsInColumn = Array.from(currentColumn.children) as HTMLElement[];
+      const itemIndex = itemsInColumn.indexOf(currentItem);
+
+      let target: HTMLElement | null = null;
+
+      if (e.key === "ArrowUp") {
+        target = itemsInColumn[itemIndex - 1] ?? null;
+      } else if (e.key === "ArrowDown") {
+        target = itemsInColumn[itemIndex + 1] ?? null;
+      } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        const direction = e.key === "ArrowRight" ? 1 : -1;
+        const targetColumnIndex = columnIndex + direction;
+
+        if (targetColumnIndex < 0 || targetColumnIndex >= activeColumns.length) {
+          return;
+        }
+
+        const targetColumn = activeColumns[targetColumnIndex];
+        const targetItems = Array.from(targetColumn.children) as HTMLElement[];
+        const currentRect = currentItem.getBoundingClientRect();
+
+        target = this.findItemAtY(targetItems, currentRect.top);
+      }
+
+      if (target) {
+        this.focusItem(target);
+      }
+    }
+
+    /**
+     * Finds the item in a list whose bounding box contains the given y coordinate.
+     * If no item contains y exactly, returns the item whose nearest edge is closest.
+     *
+     * @param {HTMLElement[]} items - Candidate items to search within.
+     * @param {number} y - The vertical coordinate to match, in viewport pixels.
+     * @returns {HTMLElement}
+     */
+    private findItemAtY(items: HTMLElement[], y: number): HTMLElement {
+      let best: HTMLElement = items[0];
+      let bestDistance = Infinity;
+
+      for (const item of items) {
+        const rect = item.getBoundingClientRect();
+
+        if (y >= rect.top && y <= rect.bottom) {
+          return item;
+        }
+
+        const distance = Math.min(
+          Math.abs(y - rect.top),
+          Math.abs(y - rect.bottom)
+        );
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = item;
+        }
+      }
+
+      return best;
+    }
+
+    /**
+     * Moves focus to an item. Prefers the first focusable descendant (link,
+     * button, etc.) over the item element itself.
+     *
+     * @param {HTMLElement} item
+     * @returns {void}
+     */
+    private focusItem(item: HTMLElement): void {
+      const focusable = item.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+
+      if (focusable) {
+        focusable.focus();
+      } else {
+        item.focus();
+      }
+    }
+
+    /**
+     * Tears down observers attached by this instance.
+     *
+     * @returns {void}
+     */
+    public destroy(): void {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  /**
+   * Initialises any uninitialised masonry roots found in the document.
+   * Safe to call multiple times — already-initialised roots are skipped.
+   *
+   * @returns {void}
+   */
+  function initAll(): void {
+    document.querySelectorAll<HTMLElement>("[data-masonry]").forEach((root) => {
+      if (!root.dataset.masonryReady && !root.dataset.masonryInit) {
+        root.dataset.masonryInit = "true";
+        new MasonryInstance(root);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", initAll);
+  document.addEventListener("astro:page-load", initAll);
+</script>
