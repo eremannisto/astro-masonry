@@ -96,6 +96,10 @@ When focus is inside the grid, arrow keys move between items:
 <Masonry aria={{ label: "Photo gallery", role: "feed" }}>
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## License
 
 MIT © [Ere Männistö](https://github.com/eremannisto)
