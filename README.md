@@ -46,11 +46,11 @@ import { Masonry } from "@mannisto/astro-masonry/components"
 | `columns` | `number` | `1` | Number of columns. Used as the base for `breakpoints` |
 | `gap` | `number \| string` | `"1rem"` | Gap between items. A plain number is treated as `px` |
 | `breakpoints` | `Record<number, number>` | — | Map of `minWidth → columns` for responsive layouts |
-| `columnMinWidth` | `number \| string` | — | Minimum column width. Fills as many columns as fit the container |
+| `autoFill` | `number \| string` | — | Minimum column width. Fills as many columns as fit the container |
 | `aria` | `{ label?, role? }` | — | Adds `aria-label` and `role` to the root element |
 | `class` | `string` | — | Extra class names on the root element |
 
-> `breakpoints` and `columnMinWidth` are mutually exclusive — using both throws an error.
+> `breakpoints` and `autoFill` are mutually exclusive — using both throws an error.
 
 ## Breakpoints
 
@@ -70,7 +70,7 @@ Let the component decide how many columns fit based on a minimum width. Column c
 
 ```astro
 <!-- as many ~280px columns as the container fits -->
-<Masonry columnMinWidth={280}>
+<Masonry autoFill={280}>
   <div>Item one</div>
   <div>Item two</div>
 </Masonry>

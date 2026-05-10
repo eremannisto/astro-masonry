@@ -98,10 +98,10 @@ test.describe("Layout", () => {
     )
   })
 
-  test("columnMinWidth produces correct column count based on container width", async ({
+  test("autoFill produces correct column count based on container width", async ({
     page,
   }) => {
-    // columnMinWidth=200; at 900px wide the container fits floor(≥800/200)=4 columns
+    // autoFill=200; at 900px wide the container fits floor(≥800/200)=4 columns
     // (using 900px so default body margin doesn't shrink root below 800px)
     await page.setViewportSize({ width: 900, height: 800 })
     await page.goto("/min-width")
@@ -125,7 +125,7 @@ test.describe("Layout", () => {
     )
   })
 
-  test("column count never drops below 1 with columnMinWidth", async ({ page }) => {
+  test("column count never drops below 1 with autoFill", async ({ page }) => {
     await page.setViewportSize({ width: 100, height: 800 })
     await page.goto("/min-width")
     await ready(page)

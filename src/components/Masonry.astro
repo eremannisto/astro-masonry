@@ -13,7 +13,7 @@ interface Props {
   columns?: number
   gap?: number | string
   breakpoints?: Breakpoints
-  columnMinWidth?: number | string
+  autoFill?: number | string
   aria?: AriaProps
   class?: string
 }
@@ -22,34 +22,34 @@ const {
   columns = 1,
   gap: rawGap = "1rem",
   breakpoints,
-  columnMinWidth,
+  autoFill,
   aria,
   class: className,
 } = Astro.props
 
 // Validate mutually exclusive props
-if (breakpoints !== undefined && columnMinWidth !== undefined) {
+if (breakpoints !== undefined && autoFill !== undefined) {
   throw new Error(
-    "[@mannisto/astro-masonry] Cannot use both `breakpoints` and `columnMinWidth` — pick one."
+    "[@mannisto/astro-masonry] Cannot use both `breakpoints` and `autoFill` — pick one."
   )
 }
 
 // Derive the maximum column count so we can pre-render the right number of
-// column containers. With columnMinWidth we can't know this statically, so
+// column containers. With autoFill we can't know this statically, so
 // we render a generous upper bound and let JS hide the surplus.
 const maxColumns = breakpoints
   ? Math.max(columns, ...(Object.values(breakpoints) as number[]))
-  : columnMinWidth !== undefined
+  : autoFill !== undefined
     ? 12
     : columns
 
-// Normalise gap and columnMinWidth to CSS strings
+// Normalise gap and autoFill to CSS strings
 const gap = typeof rawGap === "number" ? `${rawGap}px` : rawGap
 const minWidth =
-  columnMinWidth !== undefined
-    ? typeof columnMinWidth === "number"
-      ? `${columnMinWidth}px`
-      : columnMinWidth
+  autoFill !== undefined
+    ? typeof autoFill === "number"
+      ? `${autoFill}px`
+      : autoFill
     : undefined
 
 const gridRole = aria?.role ?? undefined
@@ -247,7 +247,7 @@ const gridLabel = aria?.label ?? undefined
     }
 
     /**
-     * Resolves the current column count from either `columnMinWidth` or
+     * Resolves the current column count from either `autoFill` or
      * `breakpoints` data attributes, falling back to the base `columns` value.
      *
      * @returns {number} The number of columns to display.

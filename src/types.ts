@@ -9,7 +9,7 @@ export type MasonryProps = {
   columns?: number
   gap?: number | string
   breakpoints?: Breakpoints
-  columnMinWidth?: number | string
+  autoFill?: number | string
   aria?: AriaProps
   class?: string
 }
