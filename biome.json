@@ -1,0 +1,79 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["**", "!!**/dist"] },
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 100,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.github",
+      "!**/*.md",
+      "!**/.pnpm-store",
+      "!**/pnpm-lock.yaml"
+    ]
+  },
+  "javascript": {
+    "formatter": {
+      "semicolons": "asNeeded",
+      "trailingCommas": "es5"
+    }
+  },
+  "html": { "formatter": { "selfCloseVoidElements": "always" } },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noCommonJs": "error",
+        "noNonNullAssertion": "off",
+        "useBlockStatements": "off",
+        "useImportType": "error"
+      },
+      "suspicious": {
+        "noDocumentCookie": "error",
+        "noExplicitAny": "warn"
+      }
+    },
+    "includes": ["**", "!dist/**", "!node_modules/**"]
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          },
+          "style": {
+            "useConst": "off",
+            "useImportType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.d.ts"],
+      "linter": {
+        "rules": {
+          "style": { "noNamespace": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["tests/**/*.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noDocumentCookie": "off",
+            "noEmptyBlockStatements": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    }
+  ],
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } }
+}

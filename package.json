@@ -1,0 +1,62 @@
+{
+  "name": "@mannisto/astro-masonry",
+  "version": "0.1.0",
+  "description": "A masonry layout component for Astro.",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://github.com/eremannisto/astro-masonry#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eremannisto/astro-masonry"
+  },
+  "bugs": {
+    "url": "https://github.com/eremannisto/astro-masonry/issues"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "masonry",
+    "layout",
+    "grid"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./components": {
+      "default": "./src/components/index.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "components": [
+        "./src/components/index.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "src/components"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "pnpm build",
+    "lint": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "test": "playwright test"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0 || ^6.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^22.19.18",
+    "astro": "^6.3.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@11.0.9+sha512.34ce82e6780233cf9cad8685029a8f81d2e06196c5a9bad98879f7424940c6817c4e4524fb7d38b8553ceed48b9758b8ebaf1abd3600c232c4c8cf7366086f38"
+}
