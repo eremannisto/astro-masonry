@@ -1,0 +1,28 @@
+---
+import { ClientRouter } from "astro:transitions"
+import { Masonry } from "@mannisto/astro-masonry/components"
+import "../../styles/global.css"
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Transitions B</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a href="/transitions/" data-testid="nav-to-a">← Go to A</a>
+      </nav>
+      <h1>Transitions B</h1>
+      <Masonry columns={2} gap="1rem" aria={{ label: "Transitions B grid" }}>
+        <div class="card card--green" data-testid="tb-item-1" style="height: 180px;">B1</div>
+        <div class="card card--green" data-testid="tb-item-2" style="height: 120px;">B2</div>
+        <div class="card card--green" data-testid="tb-item-3" style="height: 220px;">B3</div>
+        <div class="card card--green" data-testid="tb-item-4" style="height: 160px;">B4</div>
+      </Masonry>
+    </main>
+  </body>
+</html>

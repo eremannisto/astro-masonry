@@ -1,0 +1,45 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import "../styles/global.css"
+
+// Each column is at least 200px wide.
+// At ~880px content width → 4 columns; at ~280px → 1 column.
+const items = [
+  { id: 1, height: 200 },
+  { id: 2, height: 100 },
+  { id: 3, height: 150 },
+  { id: 4, height: 250 },
+  { id: 5, height: 100 },
+  { id: 6, height: 200 },
+  { id: 7, height: 150 },
+  { id: 8, height: 100 },
+]
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Min-width — fluid columns</title>
+  </head>
+  <body>
+    <main>
+      <h1>Fluid columns (columnMinWidth 200px)</h1>
+      <Masonry
+        columnMinWidth={200}
+        gap="1rem"
+        aria={{ label: "Fluid masonry grid" }}
+      >
+        {items.map((item) => (
+          <div
+            class="card card--yellow"
+            data-testid={`item-${item.id}`}
+            style={`height: ${item.height}px;`}
+          >
+            Item {item.id}
+          </div>
+        ))}
+      </Masonry>
+    </main>
+  </body>
+</html>

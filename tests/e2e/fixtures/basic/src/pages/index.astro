@@ -1,0 +1,45 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import "../styles/global.css"
+
+// Heights chosen so the shortest-column algorithm produces a known, stable layout:
+// Col 0: items 1 (200), 6 (200)         → total 400
+// Col 1: items 2 (100), 4 (250), 8 (100) → total 450
+// Col 2: items 3 (150), 5 (100), 7 (150) → total 400
+const items = [
+  { id: 1, height: 200 },
+  { id: 2, height: 100 },
+  { id: 3, height: 150 },
+  { id: 4, height: 250 },
+  { id: 5, height: 100 },
+  { id: 6, height: 200 },
+  { id: 7, height: 150 },
+  { id: 8, height: 100 },
+]
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Basic — fixed columns</title>
+  </head>
+  <body>
+    <main>
+      <h1>Fixed columns (3)</h1>
+      <Masonry columns={3} gap="1rem" aria={{ label: "Basic masonry grid" }}>
+        {items.map((item) => (
+          <div
+            class="card card--indigo"
+            data-testid={`item-${item.id}`}
+            style={`height: ${item.height}px;`}
+          >
+            <a href={`#item-${item.id}`} data-testid={`link-${item.id}`}>
+              Item {item.id}
+            </a>
+          </div>
+        ))}
+      </Masonry>
+    </main>
+  </body>
+</html>

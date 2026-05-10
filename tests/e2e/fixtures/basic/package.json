@@ -1,0 +1,14 @@
+{
+  "name": "astro-masonry-fixture-basic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@mannisto/astro-masonry": "workspace:*",
+    "astro": "^6.1.9"
+  }
+}

@@ -1,0 +1,35 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import "../styles/global.css"
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Multiple instances</title>
+  </head>
+  <body>
+    <main>
+      <section data-testid="section-a">
+        <h1>First masonry (2 columns)</h1>
+        <Masonry columns={2} gap="1rem" aria={{ label: "First masonry" }}>
+          <div class="card card--blue" data-testid="m1-item-1" style="height: 200px;">A1</div>
+          <div class="card card--blue" data-testid="m1-item-2" style="height: 100px;">A2</div>
+          <div class="card card--blue" data-testid="m1-item-3" style="height: 150px;">A3</div>
+          <div class="card card--blue" data-testid="m1-item-4" style="height: 250px;">A4</div>
+        </Masonry>
+      </section>
+
+      <section data-testid="section-b">
+        <h1>Second masonry (3 columns)</h1>
+        <Masonry columns={3} gap="1rem" aria={{ label: "Second masonry" }}>
+          <div class="card card--green" data-testid="m2-item-1" style="height: 150px;">B1</div>
+          <div class="card card--green" data-testid="m2-item-2" style="height: 200px;">B2</div>
+          <div class="card card--green" data-testid="m2-item-3" style="height: 100px;">B3</div>
+          <div class="card card--green" data-testid="m2-item-4" style="height: 250px;">B4</div>
+        </Masonry>
+      </section>
+    </main>
+  </body>
+</html>
