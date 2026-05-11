@@ -1,0 +1,93 @@
+:root {
+  --emerald-50: oklch(97.93% 0.0207 166.1deg);
+  --emerald-100: oklch(95.05% 0.0507 163.1deg);
+  --emerald-150: oklch(92.84% 0.0708 164.2deg);
+  --emerald-200: oklch(90.49% 0.0895 164.2deg);
+  --emerald-250: oklch(87.44% 0.1101 165.2deg);
+  --emerald-300: oklch(84.52% 0.1299 165deg);
+  --emerald-350: oklch(80.8% 0.1433 164.4deg);
+  --emerald-400: oklch(77.29% 0.1535 163.2deg);
+  --emerald-450: oklch(73.42% 0.1519 163deg);
+  --emerald-500: oklch(69.59% 0.1491 162.5deg);
+  --emerald-550: oklch(64.78% 0.1389 162.6deg);
+  --emerald-600: oklch(59.6% 0.1274 163.2deg);
+  --emerald-650: oklch(55.25% 0.1162 164.3deg);
+  --emerald-700: oklch(50.81% 0.1049 165.6deg);
+  --emerald-750: oklch(47.19% 0.0961 166.3deg);
+  --emerald-800: oklch(43.18% 0.0865 166.9deg);
+  --emerald-850: oklch(40.68% 0.0801 167.9deg);
+  --emerald-900: oklch(37.8% 0.073 168.9deg);
+  --emerald-950: oklch(26.21% 0.0487 172.6deg);
+
+  &[data-primary="emerald"] {
+    --primary-0: white;
+    --primary-50: var(--emerald-50);
+    --primary-100: var(--emerald-100);
+    --primary-150: var(--emerald-150);
+    --primary-200: var(--emerald-200);
+    --primary-250: var(--emerald-250);
+    --primary-300: var(--emerald-300);
+    --primary-350: var(--emerald-350);
+    --primary-400: var(--emerald-400);
+    --primary-450: var(--emerald-450);
+    --primary-500: var(--emerald-500);
+    --primary-550: var(--emerald-550);
+    --primary-600: var(--emerald-600);
+    --primary-650: var(--emerald-650);
+    --primary-700: var(--emerald-700);
+    --primary-750: var(--emerald-750);
+    --primary-800: var(--emerald-800);
+    --primary-850: var(--emerald-850);
+    --primary-900: var(--emerald-900);
+    --primary-950: var(--emerald-950);
+    --primary-1000: black;
+  }
+
+  &[data-secondary="emerald"] {
+    --secondary-0: white;
+    --secondary-50: var(--emerald-50);
+    --secondary-100: var(--emerald-100);
+    --secondary-150: var(--emerald-150);
+    --secondary-200: var(--emerald-200);
+    --secondary-250: var(--emerald-250);
+    --secondary-300: var(--emerald-300);
+    --secondary-350: var(--emerald-350);
+    --secondary-400: var(--emerald-400);
+    --secondary-450: var(--emerald-450);
+    --secondary-500: var(--emerald-500);
+    --secondary-550: var(--emerald-550);
+    --secondary-600: var(--emerald-600);
+    --secondary-650: var(--emerald-650);
+    --secondary-700: var(--emerald-700);
+    --secondary-750: var(--emerald-750);
+    --secondary-800: var(--emerald-800);
+    --secondary-850: var(--emerald-850);
+    --secondary-900: var(--emerald-900);
+    --secondary-950: var(--emerald-950);
+    --secondary-1000: black;
+  }
+
+  &[data-accent="emerald"] {
+    --accent-0: white;
+    --accent-50: var(--emerald-50);
+    --accent-100: var(--emerald-100);
+    --accent-150: var(--emerald-150);
+    --accent-200: var(--emerald-200);
+    --accent-250: var(--emerald-250);
+    --accent-300: var(--emerald-300);
+    --accent-350: var(--emerald-350);
+    --accent-400: var(--emerald-400);
+    --accent-450: var(--emerald-450);
+    --accent-500: var(--emerald-500);
+    --accent-550: var(--emerald-550);
+    --accent-600: var(--emerald-600);
+    --accent-650: var(--emerald-650);
+    --accent-700: var(--emerald-700);
+    --accent-750: var(--emerald-750);
+    --accent-800: var(--emerald-800);
+    --accent-850: var(--emerald-850);
+    --accent-900: var(--emerald-900);
+    --accent-950: var(--emerald-950);
+    --accent-1000: black;
+  }
+}

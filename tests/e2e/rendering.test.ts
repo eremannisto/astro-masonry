@@ -27,6 +27,11 @@ test.describe("Rendering", () => {
     const colItems = page.locator("[data-masonry-column] [data-testid='item-1']")
     await expect(colItems).toBeVisible()
   })
+
+  test("data-masonry-ready attribute is set on root after first layout", async ({ page }) => {
+    await page.goto("/")
+    await expect(page.locator("[data-masonry][data-masonry-ready]")).toBeAttached()
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -41,7 +46,7 @@ test.describe("Layout", () => {
   })
 
   test("items are distributed into the correct number of columns", async ({ page }) => {
-    // 3 columns requested; columns with items should be exactly 3
+    // 3 Columns requested; columns with items should be exactly 3
     const activeCount = await page.evaluate(
       () =>
         Array.from(document.querySelectorAll("[data-masonry-column]")).filter(
@@ -64,7 +69,7 @@ test.describe("Layout", () => {
     await expect(col1.locator("[data-testid='item-4']")).toBeAttached()
     await expect(col1.locator("[data-testid='item-8']")).toBeAttached()
 
-    // item-4 is NOT in col0 (which round-robin would produce)
+    // Item-4 is NOT in col0 (which round-robin would produce)
     await expect(col0.locator("[data-testid='item-4']")).not.toBeAttached()
   })
 
@@ -98,11 +103,9 @@ test.describe("Layout", () => {
     )
   })
 
-  test("autoFill produces correct column count based on container width", async ({
-    page,
-  }) => {
-    // autoFill=200; at 900px wide the container fits floor(≥800/200)=4 columns
-    // (using 900px so default body margin doesn't shrink root below 800px)
+  test("autoColumns produces correct column count based on container width", async ({ page }) => {
+    // autoColumns=200; at 900px wide the container fits floor(≥800/200)=4 columns
+    // (Using 900px so default body margin doesn't shrink root below 800px)
     await page.setViewportSize({ width: 900, height: 800 })
     await page.goto("/min-width")
     await ready(page)
@@ -125,7 +128,47 @@ test.describe("Layout", () => {
     )
   })
 
-  test("column count never drops below 1 with autoFill", async ({ page }) => {
+  test("autoColumns + columns caps the maximum column count", async ({ page }) => {
+    // autoColumns=200, columns=3 (cap). At 900px, floor(≈880/200)=4, but cap=3.
+    await page.setViewportSize({ width: 900, height: 800 })
+    await page.goto("/auto-cap")
+    await ready(page)
+
+    const active = await page.evaluate(
+      () =>
+        Array.from(document.querySelectorAll("[data-masonry-column]")).filter(
+          (c) => (c as HTMLElement).style.display !== "none"
+        ).length
+    )
+    expect(active).toBe(3)
+  })
+
+  test("autoColumns + breakpoints adjusts the cap at different viewport widths", async ({
+    page,
+  }) => {
+    // autoColumns=200, breakpoints={{ 640: 2, 1024: 3 }}
+    await page.setViewportSize({ width: 1024, height: 800 })
+    await page.goto("/auto-breakpoints")
+    await ready(page)
+
+    const at1024 = await page.evaluate(
+      () =>
+        Array.from(document.querySelectorAll("[data-masonry-column]")).filter(
+          (c) => (c as HTMLElement).style.display !== "none"
+        ).length
+    )
+    expect(at1024).toBe(3)
+
+    await page.setViewportSize({ width: 640, height: 800 })
+    await page.waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll("[data-masonry-column]")).filter(
+          (c) => (c as HTMLElement).style.display !== "none"
+        ).length === 2
+    )
+  })
+
+  test("column count never drops below 1 with autoColumns", async ({ page }) => {
     await page.setViewportSize({ width: 100, height: 800 })
     await page.goto("/min-width")
     await ready(page)
@@ -152,9 +195,52 @@ test.describe("Images", () => {
 
   test("a failed image load does not block layout from completing", async ({ page }) => {
     await page.goto("/images")
-    // /missing.png will 404 — layout must still complete
+    // /missing.png Will 404 — layout must still complete
     await page.waitForSelector("[data-masonry][data-masonry-ready]")
     await expect(page.locator("[data-testid='item-img-broken']")).toBeAttached()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Sequential
+// ---------------------------------------------------------------------------
+
+test.describe("Sequential", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto("/sequential")
+    await ready(page)
+  })
+
+  test("sequential distributes items left-to-right, top-to-bottom (round-robin)", async ({
+    page,
+  }) => {
+    // 9 Items, 3 cols: col0→1,4,7  col1→2,5,8  col2→3,6,9
+    const col0 = page.locator("[data-masonry-column]").nth(0)
+    const col1 = page.locator("[data-masonry-column]").nth(1)
+    const col2 = page.locator("[data-masonry-column]").nth(2)
+
+    await expect(col0.locator("[data-testid='item-1']")).toBeAttached()
+    await expect(col0.locator("[data-testid='item-4']")).toBeAttached()
+    await expect(col0.locator("[data-testid='item-7']")).toBeAttached()
+    await expect(col1.locator("[data-testid='item-2']")).toBeAttached()
+    await expect(col1.locator("[data-testid='item-5']")).toBeAttached()
+    await expect(col1.locator("[data-testid='item-8']")).toBeAttached()
+    await expect(col2.locator("[data-testid='item-3']")).toBeAttached()
+    await expect(col2.locator("[data-testid='item-6']")).toBeAttached()
+    await expect(col2.locator("[data-testid='item-9']")).toBeAttached()
+  })
+
+  test("sequential does not affect keyboard navigation", async ({ page }) => {
+    // ArrowDown from item-1's link (col 0, pos 0) should reach item-4's link (col 0, pos 1)
+    await page.focus("[data-testid='item-1'] a")
+    await page.keyboard.press("ArrowDown")
+    await expect(page.locator("[data-testid='item-4'] a")).toBeFocused()
+
+    // ArrowRight from item-1's link (col 0) should reach item-2's link (col 1 top)
+    await page.focus("[data-testid='item-1'] a")
+    await page.keyboard.press("ArrowRight")
+    await expect(page.locator("[data-testid='item-2'] a")).toBeFocused()
   })
 })
 

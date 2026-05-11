@@ -1,9 +1,11 @@
 ---
 import { Masonry } from "@mannisto/astro-masonry/components"
-import "../styles/global.css"
+import Card from "../components/Card.astro"
+import Circle from "../components/Circle.astro"
+import Layout from "../components/Layout.astro"
 
-// Heights chosen so the shortest-column algorithm produces a known, stable layout:
-// Col 0: items 1 (200), 6 (200)         → total 400
+// Items 1–8 heights are fixed — the shortest-column test relies on their layout:
+// Col 0: items 1 (200), 6 (200)          → total 400
 // Col 1: items 2 (100), 4 (250), 8 (100) → total 450
 // Col 2: items 3 (150), 5 (100), 7 (150) → total 400
 const items = [
@@ -15,31 +17,26 @@ const items = [
   { id: 6, height: 200 },
   { id: 7, height: 150 },
   { id: 8, height: 100 },
+  { id: 9, height: 180 },
+  { id: 10, height: 220 },
+  { id: 11, height: 130 },
+  { id: 12, height: 170 },
+  { id: 13, height: 240 },
+  { id: 14, height: 110 },
+  { id: 15, height: 190 },
+  { id: 16, height: 160 },
 ]
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Basic — fixed columns</title>
-  </head>
-  <body>
-    <main>
-      <h1>Fixed columns (3)</h1>
-      <Masonry columns={3} gap="1rem" aria={{ label: "Basic masonry grid" }}>
-        {items.map((item) => (
-          <div
-            class="card card--indigo"
-            data-testid={`item-${item.id}`}
-            style={`height: ${item.height}px;`}
-          >
-            <a href={`#item-${item.id}`} data-testid={`link-${item.id}`}>
-              Item {item.id}
-            </a>
-          </div>
-        ))}
-      </Masonry>
-    </main>
-  </body>
-</html>
+<Layout title="Basic — fixed columns">
+  <h1>Fixed columns (3)</h1>
+  <Masonry columns={3} gap="1rem" aria-label="Basic masonry grid" role="region">
+    {items.map((item) => (
+      <Card color="blue" height={item.height} testId={`item-${item.id}`}>
+        <a href={`#item-${item.id}`} data-testid={`link-${item.id}`}>
+          <Circle color="blue">{item.id}</Circle>
+        </a>
+      </Card>
+    ))}
+  </Masonry>
+</Layout>

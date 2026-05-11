@@ -4,8 +4,10 @@ import Card from "../components/Card.astro"
 import Circle from "../components/Circle.astro"
 import Layout from "../components/Layout.astro"
 
-// Each column is at least 200px wide.
-// At ~880px content width → 4 columns; at ~280px → 1 column.
+// autoColumns=200, breakpoints act as dynamic caps:
+//   Below 640px  → columns=1 cap
+//   640–1023px   → columns=2 cap
+//   1024px+      → columns=3 cap
 const items = [
   { id: 1, height: 200 },
   { id: 2, height: 100 },
@@ -13,25 +15,23 @@ const items = [
   { id: 4, height: 250 },
   { id: 5, height: 100 },
   { id: 6, height: 200 },
-  { id: 7, height: 150 },
-  { id: 8, height: 100 },
-  { id: 9, height: 180 },
-  { id: 10, height: 230 },
-  { id: 11, height: 120 },
-  { id: 12, height: 160 },
-  { id: 13, height: 210 },
-  { id: 14, height: 140 },
-  { id: 15, height: 190 },
-  { id: 16, height: 170 },
+  { id: 7, height: 160 },
+  { id: 8, height: 120 },
+  { id: 9, height: 210 },
+  { id: 10, height: 180 },
+  { id: 11, height: 140 },
+  { id: 12, height: 230 },
 ]
 ---
 
-<Layout title="Min-width — fluid columns">
-  <h1>Auto columns (min 200px, up to 12)</h1>
+<Layout title="Auto + breakpoints — dynamic cap">
+  <h1>Auto columns with breakpoint caps</h1>
   <Masonry
     autoColumns={200}
+    columns={1}
+    breakpoints={{ 640: 2, 1024: 3 }}
     gap="1rem"
-    aria-label="Fluid masonry grid"
+    aria-label="Auto breakpoints masonry grid"
   >
     {items.map((item) => (
       <Card color="yellow" height={item.height} testId={`item-${item.id}`}>

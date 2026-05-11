@@ -1,38 +1,37 @@
 ---
+import { Image } from "astro:assets"
 import { Masonry } from "@mannisto/astro-masonry/components"
-import "../styles/global.css"
+import img1 from "../assets/image-1.jpg"
+import img2 from "../assets/image-2.jpg"
+import img3 from "../assets/image-3.jpg"
+import img4 from "../assets/image-4.jpg"
+import img5 from "../assets/image-5.jpg"
+import img6 from "../assets/image-6.jpg"
+import img7 from "../assets/image-7.jpg"
+import img8 from "../assets/image-8.jpg"
+import Card from "../components/Card.astro"
+import Layout from "../components/Layout.astro"
+
+const images = [img1, img2, img3, img4, img5, img6, img7, img8]
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Images</title>
-  </head>
-  <body>
-    <main>
-      <h1>Image cards</h1>
-      <Masonry columns={2} gap="1rem" aria={{ label: "Image masonry grid" }}>
-        <!-- No image — layout should run immediately for this item -->
-        <div class="card card--pink" data-testid="item-no-img" style="height: 150px;">
-          No image
-        </div>
+<Layout title="Images">
+  <h1>Image cards</h1>
+  <Masonry autoColumns="300px" aria-label="Image masonry grid">
+    {images.map((src, i) => (
+      <Image
+        src={src}
+        width={src.width}
+        height={src.height}
+        alt=""
+        data-testid={`item-img-${i + 1}`}
+        style="display: block; width: 100%; height: auto; border-radius: 8px;"
+      />
+    ))}
 
-        <!-- Working image -->
-        <div class="card card--pink card--image" data-testid="item-img-ok-1" style="height: 200px;">
-          <img src="/tile.svg" alt="Tile" data-testid="img-ok-1" />
-        </div>
-
-        <!-- Broken image — error event must not block layout -->
-        <div class="card card--pink card--image" data-testid="item-img-broken" style="height: 150px;">
-          <img src="/missing.png" alt="Missing" data-testid="img-broken" />
-        </div>
-
-        <!-- Second working image -->
-        <div class="card card--pink card--image" data-testid="item-img-ok-2" style="height: 100px;">
-          <img src="/tile.svg" alt="Tile" data-testid="img-ok-2" />
-        </div>
-      </Masonry>
-    </main>
-  </body>
-</html>
+    <!-- Broken image — error must not block layout from completing -->
+    <Card color="red" height={260} testId="item-img-broken" image>
+      <img src="/missing.png" alt="Missing" data-testid="img-broken" />
+    </Card>
+  </Masonry>
+</Layout>

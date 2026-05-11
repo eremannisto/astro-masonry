@@ -1,0 +1,39 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Card from "../components/Card.astro"
+import Circle from "../components/Circle.astro"
+import Layout from "../components/Layout.astro"
+
+// autoColumns=200, columns=3 (cap).
+// At 900px the container fits floor(≈880/200)=4, but cap=3 → shows 3.
+const items = [
+  { id: 1, height: 200 },
+  { id: 2, height: 100 },
+  { id: 3, height: 150 },
+  { id: 4, height: 250 },
+  { id: 5, height: 100 },
+  { id: 6, height: 200 },
+  { id: 7, height: 170 },
+  { id: 8, height: 130 },
+  { id: 9, height: 220 },
+  { id: 10, height: 160 },
+  { id: 11, height: 190 },
+  { id: 12, height: 140 },
+]
+---
+
+<Layout title="Auto-cap — fluid columns with maximum">
+  <h1>Auto columns capped at 3</h1>
+  <Masonry
+    autoColumns={200}
+    columns={3}
+    gap="1rem"
+    aria-label="Capped fluid masonry grid"
+  >
+    {items.map((item) => (
+      <Card color="blue" height={item.height} testId={`item-${item.id}`}>
+        <Circle color="blue">{item.id}</Circle>
+      </Card>
+    ))}
+  </Masonry>
+</Layout>

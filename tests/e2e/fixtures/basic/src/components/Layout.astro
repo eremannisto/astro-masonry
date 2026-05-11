@@ -1,0 +1,45 @@
+---
+import "../styles/colors/amber.css"
+import "../styles/colors/blue.css"
+import "../styles/colors/cyan.css"
+import "../styles/colors/emerald.css"
+import "../styles/colors/fuchsia.css"
+import "../styles/colors/gray.css"
+import "../styles/colors/green.css"
+import "../styles/colors/indigo.css"
+import "../styles/colors/lime.css"
+import "../styles/colors/neutral.css"
+import "../styles/colors/orange.css"
+import "../styles/colors/pink.css"
+import "../styles/colors/purple.css"
+import "../styles/colors/red.css"
+import "../styles/colors/rose.css"
+import "../styles/colors/sky.css"
+import "../styles/colors/slate.css"
+import "../styles/colors/stone.css"
+import "../styles/colors/teal.css"
+import "../styles/colors/violet.css"
+import "../styles/colors/yellow.css"
+import "../styles/colors/zinc.css"
+import "../styles/global.css"
+
+interface Props {
+  title: string
+}
+
+const { title } = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <slot name="head" />
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

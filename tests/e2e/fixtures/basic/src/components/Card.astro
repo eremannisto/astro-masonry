@@ -1,0 +1,124 @@
+---
+type Color = "blue" | "green" | "yellow" | "red"
+
+interface Props {
+  color?: Color
+  height: number
+  testId?: string
+  image?: boolean
+}
+
+const { color = "blue", height, testId, image = false } = Astro.props
+---
+
+<div
+  class:list={["card", { "card--image": image }]}
+  data-color={color}
+  data-testid={testId}
+  style={`height: ${height}px;`}
+>
+  <slot />
+</div>
+
+<style>
+  .card {
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .card :global(a) {
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card :global(:focus-visible) {
+    border-radius: 6px;
+    outline: 2px solid;
+  }
+
+  .card[data-color="blue"] {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--blue-50),
+      var(--blue-50) 10px,
+      var(--blue-100) 10px,
+      var(--blue-100) 20px
+    );
+    color: var(--blue-900);
+    border: 3px solid var(--blue-50);
+    outline: 2px solid var(--blue-150);
+  }
+  .card[data-color="blue"] :global(:focus-visible) {
+    outline-color: var(--blue-900);
+  }
+
+  .card[data-color="green"] {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--green-50),
+      var(--green-50) 10px,
+      var(--green-100) 10px,
+      var(--green-100) 20px
+    );
+    color: var(--green-900);
+    border: 3px solid var(--green-50);
+    outline: 2px solid var(--green-150);
+  }
+  .card[data-color="green"] :global(:focus-visible) {
+    outline-color: var(--green-900);
+  }
+
+  .card[data-color="yellow"] {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--amber-50),
+      var(--amber-50) 10px,
+      var(--amber-150) 10px,
+      var(--amber-150) 20px
+    );
+    color: var(--amber-900);
+    border: 3px solid var(--amber-50);
+    outline: 2px solid var(--amber-150);
+  }
+  .card[data-color="yellow"] :global(:focus-visible) {
+    outline-color: var(--amber-900);
+  }
+
+  .card[data-color="red"] {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--red-50),
+      var(--red-50) 10px,
+      var(--red-100) 10px,
+      var(--red-100) 20px
+    );
+    color: var(--red-900);
+    border: 3px solid var(--red-50);
+    outline: 2px solid var(--red-150);
+  }
+  .card[data-color="red"] :global(:focus-visible) {
+    outline-color: var(--red-900);
+  }
+
+  .card--image {
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .card--image :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+</style>

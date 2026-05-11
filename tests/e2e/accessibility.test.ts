@@ -13,8 +13,12 @@ test.describe("Accessibility", () => {
     await expect(page.locator("[data-masonry-slot]")).not.toBeAttached()
   })
 
-  test("aria.label renders as aria-label on the root element", async ({ page }) => {
+  test("aria-label prop renders on the root element", async ({ page }) => {
     await expect(page.locator("[data-masonry]")).toHaveAttribute("aria-label", "Basic masonry grid")
+  })
+
+  test("role prop renders on the root element", async ({ page }) => {
+    await expect(page.locator("[data-masonry]")).toHaveAttribute("role", "region")
   })
 
   test("slotted items with links remain focusable after layout (not cloned)", async ({ page }) => {

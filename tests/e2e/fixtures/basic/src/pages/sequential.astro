@@ -1,0 +1,40 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Card from "../components/Card.astro"
+import Circle from "../components/Circle.astro"
+import Layout from "../components/Layout.astro"
+
+// sequential=true with 3 columns: round-robin distribution
+//   Col 0: items 1, 4, 7
+//   Col 1: items 2, 5, 8
+//   Col 2: items 3, 6, 9
+const items = [
+  { id: 1, height: 200 },
+  { id: 2, height: 100 },
+  { id: 3, height: 150 },
+  { id: 4, height: 250 },
+  { id: 5, height: 120 },
+  { id: 6, height: 180 },
+  { id: 7, height: 160 },
+  { id: 8, height: 130 },
+  { id: 9, height: 210 },
+]
+---
+
+<Layout title="Sequential — round-robin distribution">
+  <h1>Sequential (round-robin) columns</h1>
+  <Masonry
+    columns={3}
+    sequential
+    gap="1rem"
+    accessibility-label="Sequential masonry grid"
+  >
+    {items.map((item) => (
+      <Card color="green" height={item.height} testId={`item-${item.id}`}>
+        <a href={`#item-${item.id}`} data-testid={`link-${item.id}`}>
+          <Circle color="green">{item.id}</Circle>
+        </a>
+      </Card>
+    ))}
+  </Masonry>
+</Layout>

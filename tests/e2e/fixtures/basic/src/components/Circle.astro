@@ -1,0 +1,47 @@
+---
+type Color = "blue" | "green" | "yellow" | "red"
+
+interface Props {
+  color: Color
+}
+
+const { color } = Astro.props
+---
+
+<span class="circle" data-color={color}>
+  <slot />
+</span>
+
+<style>
+  .circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .circle[data-color="blue"] {
+    background: var(--blue-900);
+    color: var(--blue-50);
+  }
+
+  .circle[data-color="green"] {
+    background: var(--green-900);
+    color: var(--green-50);
+  }
+
+  .circle[data-color="yellow"] {
+    background: var(--amber-900);
+    color: var(--amber-50);
+  }
+
+  .circle[data-color="red"] {
+    background: var(--red-900);
+    color: var(--red-50);
+  }
+</style>

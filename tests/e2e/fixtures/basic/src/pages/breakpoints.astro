@@ -1,6 +1,8 @@
 ---
 import { Masonry } from "@mannisto/astro-masonry/components"
-import "../styles/global.css"
+import Card from "../components/Card.astro"
+import Circle from "../components/Circle.astro"
+import Layout from "../components/Layout.astro"
 
 // 1 column below 480px, 2 columns from 480px, 3 columns from 768px
 const items = [
@@ -12,34 +14,29 @@ const items = [
   { id: 6, height: 200 },
   { id: 7, height: 150 },
   { id: 8, height: 100 },
+  { id: 9, height: 220 },
+  { id: 10, height: 130 },
+  { id: 11, height: 180 },
+  { id: 12, height: 160 },
+  { id: 13, height: 110 },
+  { id: 14, height: 240 },
+  { id: 15, height: 170 },
+  { id: 16, height: 190 },
 ]
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Breakpoints — responsive columns</title>
-  </head>
-  <body>
-    <main>
-      <h1>Responsive columns (breakpoints)</h1>
-      <Masonry
-        columns={1}
-        breakpoints={{ 480: 2, 768: 3 }}
-        gap="1rem"
-        aria={{ label: "Responsive masonry grid" }}
-      >
-        {items.map((item) => (
-          <div
-            class="card card--green"
-            data-testid={`item-${item.id}`}
-            style={`height: ${item.height}px;`}
-          >
-            Item {item.id}
-          </div>
-        ))}
-      </Masonry>
-    </main>
-  </body>
-</html>
+<Layout title="Breakpoints — responsive columns">
+  <h1>Responsive columns (breakpoints)</h1>
+  <Masonry
+    columns={1}
+    breakpoints={{ 480: 2, 768: 3 }}
+    gap="1rem"
+    aria-label="Responsive masonry grid"
+  >
+    {items.map((item) => (
+      <Card color="green" height={item.height} testId={`item-${item.id}`}>
+        <Circle color="green">{item.id}</Circle>
+      </Card>
+    ))}
+  </Masonry>
+</Layout>

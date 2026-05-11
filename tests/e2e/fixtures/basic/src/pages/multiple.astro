@@ -1,35 +1,37 @@
 ---
 import { Masonry } from "@mannisto/astro-masonry/components"
-import "../styles/global.css"
+import Card from "../components/Card.astro"
+import Circle from "../components/Circle.astro"
+import Layout from "../components/Layout.astro"
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Multiple instances</title>
-  </head>
-  <body>
-    <main>
-      <section data-testid="section-a">
-        <h1>First masonry (2 columns)</h1>
-        <Masonry columns={2} gap="1rem" aria={{ label: "First masonry" }}>
-          <div class="card card--blue" data-testid="m1-item-1" style="height: 200px;">A1</div>
-          <div class="card card--blue" data-testid="m1-item-2" style="height: 100px;">A2</div>
-          <div class="card card--blue" data-testid="m1-item-3" style="height: 150px;">A3</div>
-          <div class="card card--blue" data-testid="m1-item-4" style="height: 250px;">A4</div>
-        </Masonry>
-      </section>
+<Layout title="Multiple instances">
+  <section data-testid="section-a">
+    <h1>First masonry (2 columns)</h1>
+    <Masonry columns={2} gap="1rem" aria-label="First masonry">
+      <Card color="blue" height={200} testId="m1-item-1"><Circle color="blue">1</Circle></Card>
+      <Card color="blue" height={100} testId="m1-item-2"><Circle color="blue">2</Circle></Card>
+      <Card color="blue" height={150} testId="m1-item-3"><Circle color="blue">3</Circle></Card>
+      <Card color="blue" height={250} testId="m1-item-4"><Circle color="blue">4</Circle></Card>
+      <Card color="blue" height={130} testId="m1-item-5"><Circle color="blue">5</Circle></Card>
+      <Card color="blue" height={180} testId="m1-item-6"><Circle color="blue">6</Circle></Card>
+      <Card color="blue" height={220} testId="m1-item-7"><Circle color="blue">7</Circle></Card>
+      <Card color="blue" height={110} testId="m1-item-8"><Circle color="blue">8</Circle></Card>
+    </Masonry>
+  </section>
 
-      <section data-testid="section-b">
-        <h1>Second masonry (3 columns)</h1>
-        <Masonry columns={3} gap="1rem" aria={{ label: "Second masonry" }}>
-          <div class="card card--green" data-testid="m2-item-1" style="height: 150px;">B1</div>
-          <div class="card card--green" data-testid="m2-item-2" style="height: 200px;">B2</div>
-          <div class="card card--green" data-testid="m2-item-3" style="height: 100px;">B3</div>
-          <div class="card card--green" data-testid="m2-item-4" style="height: 250px;">B4</div>
-        </Masonry>
-      </section>
-    </main>
-  </body>
-</html>
+  <section data-testid="section-b" style="margin-top: 3rem;">
+    <h1>Second masonry (3 columns)</h1>
+    <Masonry columns={3} gap="1rem" aria-label="Second masonry">
+      <Card color="green" height={150} testId="m2-item-1"><Circle color="green">1</Circle></Card>
+      <Card color="green" height={200} testId="m2-item-2"><Circle color="green">2</Circle></Card>
+      <Card color="green" height={100} testId="m2-item-3"><Circle color="green">3</Circle></Card>
+      <Card color="green" height={250} testId="m2-item-4"><Circle color="green">4</Circle></Card>
+      <Card color="green" height={170} testId="m2-item-5"><Circle color="green">5</Circle></Card>
+      <Card color="green" height={130} testId="m2-item-6"><Circle color="green">6</Circle></Card>
+      <Card color="green" height={210} testId="m2-item-7"><Circle color="green">7</Circle></Card>
+      <Card color="green" height={160} testId="m2-item-8"><Circle color="green">8</Circle></Card>
+      <Card color="green" height={190} testId="m2-item-9"><Circle color="green">9</Circle></Card>
+    </Masonry>
+  </section>
+</Layout>

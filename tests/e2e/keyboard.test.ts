@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test"
 
-// Column layout for the index page (heights [200,100,150,250,100,200,150,100], 3 cols):
-//   Col 0: items 1, 6
-//   Col 1: items 2, 4, 8
-//   Col 2: items 3, 5, 7
+// Column layout for the index page (16 items, 3 cols):
+//   Col 0: items 1, 6, 9, 12, 16
+//   Col 1: items 2, 4, 8, 11, 13
+//   Col 2: items 3, 5, 7, 10, 14, 15
 
 const ready = (page: import("@playwright/test").Page) =>
   page.waitForSelector("[data-masonry][data-masonry-ready]")
@@ -25,10 +25,10 @@ test.describe("Keyboard navigation", () => {
   })
 
   test("ArrowDown on the last item in a column does nothing", async ({ page }) => {
-    await page.focus("[data-testid='link-6']")
+    await page.focus("[data-testid='link-16']")
     await page.keyboard.press("ArrowDown")
-    // Focus stays on link-6 (last in col 0)
-    await expect(page.locator("[data-testid='link-6']")).toBeFocused()
+    // Focus stays on link-16 (last in col 0)
+    await expect(page.locator("[data-testid='link-16']")).toBeFocused()
   })
 
   // -------------------------------------------------------------------------
@@ -54,14 +54,14 @@ test.describe("Keyboard navigation", () => {
   test("ArrowRight moves to the item in the next column at the same vertical position", async ({
     page,
   }) => {
-    // item-1 is at the top of col 0; item-2 is at the top of col 1
+    // Item-1 is at the top of col 0; item-2 is at the top of col 1
     await page.focus("[data-testid='link-1']")
     await page.keyboard.press("ArrowRight")
     await expect(page.locator("[data-testid='link-2']")).toBeFocused()
   })
 
   test("ArrowRight on the last column does nothing", async ({ page }) => {
-    // item-3 is in col 2 (last column)
+    // Item-3 is in col 2 (last column)
     await page.focus("[data-testid='link-3']")
     await page.keyboard.press("ArrowRight")
     await expect(page.locator("[data-testid='link-3']")).toBeFocused()
@@ -74,7 +74,7 @@ test.describe("Keyboard navigation", () => {
   test("ArrowLeft moves to the item in the previous column at the same vertical position", async ({
     page,
   }) => {
-    // item-2 is at the top of col 1; item-1 is at the top of col 0
+    // Item-2 is at the top of col 1; item-1 is at the top of col 0
     await page.focus("[data-testid='link-2']")
     await page.keyboard.press("ArrowLeft")
     await expect(page.locator("[data-testid='link-1']")).toBeFocused()
@@ -98,8 +98,8 @@ test.describe("Keyboard navigation", () => {
     await expect(page.locator("[data-testid='link-4']")).toBeFocused()
 
     await page.keyboard.press("ArrowRight") // → item in col 2 at ≈ item-4's top y
-    // item-4 top ≈ 100+gap below col top; col2 has item-3(150), item-5(100), item-7(150)
-    // item-4's y is within item-3's range → lands on item-3 or item-5
+    // Item-4 top ≈ 100+gap below col top; col2 has item-3(150), item-5(100), item-7(150)
+    // Item-4's y is within item-3's range → lands on item-3 or item-5
     const focused = await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))
     expect(["link-3", "link-5"]).toContain(focused)
   })

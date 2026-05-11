@@ -1,0 +1,93 @@
+:root {
+  --indigo-50: oklch(96.19% 0.0179 272.3deg);
+  --indigo-100: oklch(92.99% 0.0334 272.8deg);
+  --indigo-150: oklch(90.14% 0.0476 273.7deg);
+  --indigo-200: oklch(86.99% 0.0622 274deg);
+  --indigo-250: oklch(82.75% 0.0829 274.6deg);
+  --indigo-300: oklch(78.53% 0.1041 274.7deg);
+  --indigo-350: oklch(73.24% 0.131 276.4deg);
+  --indigo-400: oklch(68.01% 0.1583 276.9deg);
+  --indigo-450: oklch(63.23% 0.1822 277.4deg);
+  --indigo-500: oklch(58.54% 0.2041 277.1deg);
+  --indigo-550: oklch(54.71% 0.2177 277.3deg);
+  --indigo-600: oklch(51.06% 0.2301 277deg);
+  --indigo-650: oklch(48.43% 0.223 277deg);
+  --indigo-700: oklch(45.68% 0.2146 277deg);
+  --indigo-750: oklch(42.83% 0.1968 277.1deg);
+  --indigo-800: oklch(39.84% 0.1773 277.4deg);
+  --indigo-850: oklch(37.84% 0.1569 278deg);
+  --indigo-900: oklch(35.88% 0.1354 278.7deg);
+  --indigo-950: oklch(25.73% 0.0861 281.3deg);
+
+  &[data-primary="indigo"] {
+    --primary-0: white;
+    --primary-50: var(--indigo-50);
+    --primary-100: var(--indigo-100);
+    --primary-150: var(--indigo-150);
+    --primary-200: var(--indigo-200);
+    --primary-250: var(--indigo-250);
+    --primary-300: var(--indigo-300);
+    --primary-350: var(--indigo-350);
+    --primary-400: var(--indigo-400);
+    --primary-450: var(--indigo-450);
+    --primary-500: var(--indigo-500);
+    --primary-550: var(--indigo-550);
+    --primary-600: var(--indigo-600);
+    --primary-650: var(--indigo-650);
+    --primary-700: var(--indigo-700);
+    --primary-750: var(--indigo-750);
+    --primary-800: var(--indigo-800);
+    --primary-850: var(--indigo-850);
+    --primary-900: var(--indigo-900);
+    --primary-950: var(--indigo-950);
+    --primary-1000: black;
+  }
+
+  &[data-secondary="indigo"] {
+    --secondary-0: white;
+    --secondary-50: var(--indigo-50);
+    --secondary-100: var(--indigo-100);
+    --secondary-150: var(--indigo-150);
+    --secondary-200: var(--indigo-200);
+    --secondary-250: var(--indigo-250);
+    --secondary-300: var(--indigo-300);
+    --secondary-350: var(--indigo-350);
+    --secondary-400: var(--indigo-400);
+    --secondary-450: var(--indigo-450);
+    --secondary-500: var(--indigo-500);
+    --secondary-550: var(--indigo-550);
+    --secondary-600: var(--indigo-600);
+    --secondary-650: var(--indigo-650);
+    --secondary-700: var(--indigo-700);
+    --secondary-750: var(--indigo-750);
+    --secondary-800: var(--indigo-800);
+    --secondary-850: var(--indigo-850);
+    --secondary-900: var(--indigo-900);
+    --secondary-950: var(--indigo-950);
+    --secondary-1000: black;
+  }
+
+  &[data-accent="indigo"] {
+    --accent-0: white;
+    --accent-50: var(--indigo-50);
+    --accent-100: var(--indigo-100);
+    --accent-150: var(--indigo-150);
+    --accent-200: var(--indigo-200);
+    --accent-250: var(--indigo-250);
+    --accent-300: var(--indigo-300);
+    --accent-350: var(--indigo-350);
+    --accent-400: var(--indigo-400);
+    --accent-450: var(--indigo-450);
+    --accent-500: var(--indigo-500);
+    --accent-550: var(--indigo-550);
+    --accent-600: var(--indigo-600);
+    --accent-650: var(--indigo-650);
+    --accent-700: var(--indigo-700);
+    --accent-750: var(--indigo-750);
+    --accent-800: var(--indigo-800);
+    --accent-850: var(--indigo-850);
+    --accent-900: var(--indigo-900);
+    --accent-950: var(--indigo-950);
+    --accent-1000: black;
+  }
+}

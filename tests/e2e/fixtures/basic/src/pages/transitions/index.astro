@@ -1,28 +1,21 @@
 ---
 import { ClientRouter } from "astro:transitions"
 import { Masonry } from "@mannisto/astro-masonry/components"
-import "../../styles/global.css"
+import Card from "../../components/Card.astro"
+import Circle from "../../components/Circle.astro"
+import Layout from "../../components/Layout.astro"
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Transitions A</title>
-    <ClientRouter />
-  </head>
-  <body>
-    <main>
-      <nav>
-        <a href="/transitions/b" data-testid="nav-to-b">Go to B →</a>
-      </nav>
-      <h1>Transitions A</h1>
-      <Masonry columns={2} gap="1rem" aria={{ label: "Transitions A grid" }}>
-        <div class="card card--indigo" data-testid="ta-item-1" style="height: 200px;">A1</div>
-        <div class="card card--indigo" data-testid="ta-item-2" style="height: 150px;">A2</div>
-        <div class="card card--indigo" data-testid="ta-item-3" style="height: 100px;">A3</div>
-        <div class="card card--indigo" data-testid="ta-item-4" style="height: 250px;">A4</div>
-      </Masonry>
-    </main>
-  </body>
-</html>
+<Layout title="Transitions A">
+  <ClientRouter slot="head" />
+  <nav>
+    <a href="/transitions/b" data-testid="nav-to-b">Go to B →</a>
+  </nav>
+  <h1>Transitions A</h1>
+  <Masonry columns={2} gap="1rem" aria-label="Transitions A grid">
+    <Card color="blue" height={200} testId="ta-item-1"><Circle color="blue">1</Circle></Card>
+    <Card color="blue" height={150} testId="ta-item-2"><Circle color="blue">2</Circle></Card>
+    <Card color="blue" height={100} testId="ta-item-3"><Circle color="blue">3</Circle></Card>
+    <Card color="blue" height={250} testId="ta-item-4"><Circle color="blue">4</Circle></Card>
+  </Masonry>
+</Layout>
