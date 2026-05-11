@@ -4,67 +4,55 @@ import type { HTMLAttributes } from "astro/types"
 /** Maps minimum viewport width in px to column count. E.g. `{ 768: 2, 1024: 3 }` */
 type Breakpoints = Record<number, number>
 
-interface AriaProps {
-  label?: string
-  role?: HTMLAttributes<"div">["role"]
-}
-
 interface Props {
   columns?: number
   gap?: number | string
   breakpoints?: Breakpoints
-  autoFill?: number | string
-  aria?: AriaProps
+  autoColumns?: number | string
+  sequential?: boolean
+  "aria-label"?: string
+  "role"?: HTMLAttributes<"div">["role"]
   class?: string
 }
 
 const {
-  columns = 1,
+  columns,
   gap: rawGap = "1rem",
   breakpoints,
-  autoFill,
-  aria,
+  autoColumns,
+  sequential,
+  "aria-label": ariaLabel,
+  "role": role,
   class: className,
 } = Astro.props
 
-// Validate mutually exclusive props
-if (breakpoints !== undefined && autoFill !== undefined) {
-  throw new Error(
-    "[@mannisto/astro-masonry] Cannot use both `breakpoints` and `autoFill` — pick one."
-  )
-}
-
-// Derive the maximum column count so we can pre-render the right number of
-// column containers. With autoFill we can't know this statically, so
-// we render a generous upper bound and let JS hide the surplus.
+// When autoColumns is set, columns is an optional cap (default: uncapped).
+// When autoColumns is not set, columns is the fixed count (default: 1).
+// For pre-rendering we need a concrete number, so uncapped autoColumns uses 12.
+const preRenderBase = autoColumns ? (columns ?? 12) : (columns ?? 1)
 const maxColumns = breakpoints
-  ? Math.max(columns, ...(Object.values(breakpoints) as number[]))
-  : autoFill !== undefined
-    ? 12
-    : columns
+  ? Math.max(preRenderBase, ...(Object.values(breakpoints) as number[]))
+  : preRenderBase
 
-// Normalise gap and autoFill to CSS strings
+// Normalise gap and autoColumns to CSS strings
 const gap = typeof rawGap === "number" ? `${rawGap}px` : rawGap
 const minWidth =
-  autoFill !== undefined
-    ? typeof autoFill === "number"
-      ? `${autoFill}px`
-      : autoFill
+  autoColumns !== undefined
+    ? typeof autoColumns === "number"
+      ? `${autoColumns}px`
+      : autoColumns
     : undefined
-
-const gridRole = aria?.role ?? undefined
-const gridLabel = aria?.label ?? undefined
 ---
 
 <div
   class:list={[className]}
   data-masonry
-  role={gridRole}
-  aria-label={gridLabel}
+  role={role}
+  aria-label={ariaLabel}
   style={`--masonry-gap: ${gap};`}
 >
   {/*
-    [data-masonry-slot] holds slotted items before JS runs.
+    [data-masonry-slot] Holds slotted items before JS runs.
     It renders as a single stacked column — a reasonable no-JS fallback.
     Once JS has distributed items into columns it is removed from the DOM
     entirely, so there is no duplication for screen readers or keyboard users.
@@ -74,14 +62,15 @@ const gridLabel = aria?.label ?? undefined
   </div>
 
   {/*
-    [data-masonry-grid] holds the visible columns after JS runs.
+    [data-masonry-grid] Holds the visible columns after JS runs.
     Hidden until layout completes to prevent a flash of empty columns.
   */}
   <div
     data-masonry-grid
-    data-columns={columns}
+    data-columns={columns ?? undefined}
     data-min-width={minWidth}
     data-breakpoints={breakpoints ? JSON.stringify(breakpoints) : undefined}
+    data-sequential={sequential || undefined}
   >
     {Array.from({ length: maxColumns }).map((_, i) => (
       <div data-masonry-column data-index={i} />
@@ -230,11 +219,14 @@ const gridLabel = aria?.label ?? undefined
 
       const activeColumns = this.columns.slice(0, columnCount);
       const heights = new Array(columnCount).fill(0) as number[];
+      const isSequential = !!this.grid.dataset.sequential;
 
-      this.items.forEach((item) => {
-        const shortestIndex = heights.indexOf(Math.min(...heights));
-        activeColumns[shortestIndex].appendChild(item);
-        heights[shortestIndex] += item.getBoundingClientRect().height;
+      this.items.forEach((item, i) => {
+        const targetIndex = isSequential
+          ? i % columnCount
+          : heights.indexOf(Math.min(...heights));
+        activeColumns[targetIndex].appendChild(item);
+        heights[targetIndex] += item.getBoundingClientRect().height;
       });
 
       // Remove the slot container from the DOM so items exist exactly once —
@@ -247,7 +239,7 @@ const gridLabel = aria?.label ?? undefined
     }
 
     /**
-     * Resolves the current column count from either `autoFill` or
+     * Resolves the current column count from either `autoColumns` or
      * `breakpoints` data attributes, falling back to the base `columns` value.
      *
      * @returns {number} The number of columns to display.
@@ -255,15 +247,37 @@ const gridLabel = aria?.label ?? undefined
     private getColumnCount(): number {
       const gridData = this.grid.dataset;
       const minWidth = gridData.minWidth;
+      const breakpointsRaw = gridData.breakpoints;
 
       if (minWidth) {
         const minPx = parseFloat(minWidth);
         const rootWidth = this.root.getBoundingClientRect().width;
-        return Math.max(1, Math.floor(rootWidth / minPx));
+        const autoCount = Math.max(1, Math.floor(rootWidth / minPx));
+        const cap = gridData.columns !== undefined
+          ? parseInt(gridData.columns, DECIMAL)
+          : Infinity;
+
+        if (!breakpointsRaw) {
+          return Math.min(autoCount, cap);
+        }
+
+        // Breakpoints act as dynamic caps on the auto column count
+        const breakpoints: Record<string, number> = JSON.parse(breakpointsRaw);
+        const windowWidth = window.innerWidth;
+        const sorted = Object.entries(breakpoints)
+          .map(([key, val]) => ({ minWidth: parseInt(key, DECIMAL), columns: val }))
+          .sort((a, b) => b.minWidth - a.minWidth);
+
+        for (const bp of sorted) {
+          if (windowWidth >= bp.minWidth) {
+            return Math.max(1, Math.min(autoCount, bp.columns));
+          }
+        }
+
+        return Math.max(1, Math.min(autoCount, cap));
       }
 
       const base = parseInt(gridData.columns ?? "1", DECIMAL);
-      const breakpointsRaw = gridData.breakpoints;
 
       if (!breakpointsRaw) {
         return base;
