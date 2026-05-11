@@ -232,15 +232,15 @@ test.describe("Sequential", () => {
   })
 
   test("sequential does not affect keyboard navigation", async ({ page }) => {
-    // ArrowDown from item-1's link (col 0, pos 0) should reach item-4's link (col 0, pos 1)
-    await page.focus("[data-testid='item-1'] a")
+    // ArrowDown from link-1 (col 0, pos 0) should reach link-4 (col 0, pos 1)
+    await page.focus("[data-testid='link-1']")
     await page.keyboard.press("ArrowDown")
-    await expect(page.locator("[data-testid='item-4'] a")).toBeFocused()
+    await expect(page.locator("[data-testid='link-4']")).toBeFocused()
 
-    // ArrowRight from item-1's link (col 0) should reach item-2's link (col 1 top)
-    await page.focus("[data-testid='item-1'] a")
+    // ArrowRight from link-1 (col 0) should reach link-2 (col 1 top)
+    await page.focus("[data-testid='link-1']")
     await page.keyboard.press("ArrowRight")
-    await expect(page.locator("[data-testid='item-2'] a")).toBeFocused()
+    await expect(page.locator("[data-testid='link-2']")).toBeFocused()
   })
 })
 
