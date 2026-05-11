@@ -1,6 +1,6 @@
 {
   "name": "@mannisto/astro-masonry",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A masonry layout component for Astro.",
   "license": "MIT",
   "type": "module",
@@ -48,7 +48,7 @@
     "test": "playwright test"
   },
   "peerDependencies": {
-    "astro": "^5.0.0 || ^6.0.0"
+    "astro": ">=3.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
