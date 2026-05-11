@@ -29,12 +29,9 @@ yarn add @mannisto/astro-masonry
 import { Masonry } from "@mannisto/astro-masonry/components"
 ---
 
-<Masonry columns={3} aria={{ label: "Photo gallery" }}>
-  {photos.map((photo) => (
-    <div class="card">
-      <img src={photo.src} alt={photo.alt} />
-      <p>{photo.caption}</p>
-    </div>
+<Masonry columns={3}>
+  {items.map((item) => (
+    <div>{item}</div>
   ))}
 </Masonry>
 ```
@@ -43,38 +40,102 @@ import { Masonry } from "@mannisto/astro-masonry/components"
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `columns` | `number` | `1` | Number of columns. Used as the base for `breakpoints` |
-| `gap` | `number \| string` | `"1rem"` | Gap between items. A plain number is treated as `px` |
-| `breakpoints` | `Record<number, number>` | — | Map of `minWidth → columns` for responsive layouts |
-| `autoFill` | `number \| string` | — | Minimum column width. Fills as many columns as fit the container |
-| `aria` | `{ label?, role? }` | — | Adds `aria-label` and `role` to the root element |
-| `class` | `string` | — | Extra class names on the root element |
+| `columns` | `number` | `1` | Number of columns in fixed mode, or maximum cap when used with `autoColumns`. Defaults to unlimited when `autoColumns` is set |
+| `gap` | `number \| string` | `"1rem"` | Gap between items. Numbers are treated as `px` |
+| `breakpoints` | `Record<number, number>` | — | Map of `minWidth → columns`. Mobile-first, stacks on top of `columns` |
+| `autoColumns` | `number \| string` | — | Fill as many columns as fit at this minimum width. Numbers are treated as `px` |
+| `sequential` | `boolean` | `false` | Distribute items left to right, top to bottom instead of shortest-column |
+| `aria-label` | `string` | — | Sets `aria-label` on the root element |
+| `role` | `string` | — | Sets `role` on the root element |
+| `class` | `string` | — | Class names on the root element |
 
-> `breakpoints` and `autoFill` are mutually exclusive — using both throws an error.
+## Examples
 
-## Breakpoints
-
-Define column counts at specific viewport widths. The `columns` prop sets the base (mobile-first), and breakpoints add on top.
+### Fixed columns
 
 ```astro
-<!-- 1 column by default, 2 from 640px, 3 from 1024px -->
-<Masonry columns={1} breakpoints={{ 640: 2, 1024: 3 }}>
-  <div>Item one</div>
-  <div>Item two</div>
+<Masonry columns={3}>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
 </Masonry>
 ```
 
-## Fluid columns
+![Balanced distribution](./docs/examples/balanced.png)
+*Items are distributed into the shortest column, keeping overall height balanced.*
 
-Let the component decide how many columns fit based on a minimum width. Column count updates automatically on container resize.
+### Responsive columns
+
+`columns` sets the base, `breakpoints` adds on top. Keys are minimum viewport widths in `px`.
 
 ```astro
-<!-- as many ~280px columns as the container fits -->
-<Masonry autoFill={280}>
-  <div>Item one</div>
-  <div>Item two</div>
+<Masonry
+  columns={1}
+  breakpoints={{ 640: 2, 1024: 3 }}
+>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
 </Masonry>
 ```
+
+### Auto-sizing columns
+
+Fills as many columns as the container fits at the given minimum width. Responds automatically to container resize.
+
+```astro
+<Masonry autoColumns={280}>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
+</Masonry>
+```
+
+### Auto-sizing with a maximum
+
+`columns` limits the maximum number of columns when used with `autoColumns`.
+
+```astro
+<Masonry
+  autoColumns={280}
+  columns={4}
+>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
+</Masonry>
+```
+
+### Auto-sizing with a responsive maximum
+
+`breakpoints` can adjust the cap at different viewport widths.
+
+```astro
+<Masonry
+  autoColumns={280}
+  columns={1}
+  breakpoints={{ 640: 2, 1024: 4 }}
+>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
+</Masonry>
+```
+
+### Sequential order
+
+Items are distributed left to right, top to bottom. Useful when reading order matters.
+
+```astro
+<Masonry columns={3} sequential>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
+</Masonry>
+```
+
+![Sequential distribution](./docs/examples/sequential.png)
+*Items are distributed left to right, top to bottom, preserving reading order.*
 
 ## Keyboard navigation
 
@@ -87,18 +148,23 @@ When focus is inside the grid, arrow keys move between items:
 | `ArrowLeft` | Item in the previous column at the same vertical position |
 | `ArrowRight` | Item in the next column at the same vertical position |
 
+![Keyboard navigation](./docs/examples/keyboard.gif)
+
 ## Accessibility
 
-- Screen readers navigate items in column order, which matches the visual layout
-- The `aria` prop accepts `label` and `role` for landmark and feed semantics
+Screen readers navigate items in column order, matching the visual layout. Use `aria-label` and `role` to identify the grid as a landmark or feed.
 
 ```astro
-<Masonry aria={{ label: "Photo gallery", role: "feed" }}>
+<Masonry
+  columns={3}
+  aria-label="Photo gallery"
+  role="feed"
+>
+  {items.map((item) => (
+    <div>{item}</div>
+  ))}
+</Masonry>
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
