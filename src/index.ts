@@ -1,1 +1,1 @@
-export type { AriaProps, Breakpoints, MasonryProps } from "./types"
+export type { Breakpoints, MasonryProps } from "./types"
