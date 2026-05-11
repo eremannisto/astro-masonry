@@ -9,6 +9,6 @@ export type MasonryProps = {
   autoColumns?: number | string
   sequential?: boolean
   "aria-label"?: string
-  "role"?: HTMLAttributes<"div">["role"]
+  role?: HTMLAttributes<"div">["role"]
   class?: string
 }

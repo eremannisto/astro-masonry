@@ -11,7 +11,7 @@ interface Props {
   autoColumns?: number | string
   sequential?: boolean
   "aria-label"?: string
-  "role"?: HTMLAttributes<"div">["role"]
+  role?: HTMLAttributes<"div">["role"]
   class?: string
 }
 
@@ -22,7 +22,7 @@ const {
   autoColumns,
   sequential,
   "aria-label": ariaLabel,
-  "role": role,
+  role,
   class: className,
 } = Astro.props
 
