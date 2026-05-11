@@ -1,15 +1,14 @@
-export type Breakpoints = Record<number, number>
+import type { HTMLAttributes } from "astro/types"
 
-export type AriaProps = {
-  label?: string
-  role?: astroHTML.JSX.HTMLAttributes["role"]
-}
+export type Breakpoints = Record<number, number>
 
 export type MasonryProps = {
   columns?: number
   gap?: number | string
   breakpoints?: Breakpoints
-  autoFill?: number | string
-  aria?: AriaProps
+  autoColumns?: number | string
+  sequential?: boolean
+  "aria-label"?: string
+  "role"?: HTMLAttributes<"div">["role"]
   class?: string
 }
