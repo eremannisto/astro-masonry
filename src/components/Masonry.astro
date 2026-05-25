@@ -133,7 +133,7 @@ const minWidth =
     private columns: HTMLElement[];
     private items: HTMLElement[];
     private resizeObserver: ResizeObserver;
-    private activeColumnCount: number;
+    private lastWidth: number;
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
     private boundHandleRefresh: () => void;
 
@@ -146,18 +146,19 @@ const minWidth =
       this.slot = root.querySelector("[data-masonry-slot]")!;
       this.columns = Array.from(root.querySelectorAll("[data-masonry-column]"));
       this.items = Array.from(this.slot.children) as HTMLElement[];
-      this.activeColumnCount = 0;
+      this.lastWidth = -1;
       this.boundHandleKeyDown = this.handleKeyDown.bind(this);
       this.boundHandleRefresh = () => this.layout();
 
-      // Only re-layout when the column count would actually change.
+      // Only re-layout when the container width changes.
       // Height-only changes (DevTools edits, content reflow, layout() itself
-      // moving items between slot and columns) never affect column count, so
-      // they are ignored without any debounce delay.
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.getColumnCount() !== this.activeColumnCount) {
-          this.layout();
-        }
+      // moving items between slot and columns) are ignored, so editing a value
+      // in the inspector does not cause the selection to jump.
+      this.resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width;
+        if (width === undefined || width === this.lastWidth) return;
+        this.lastWidth = width;
+        this.layout();
       });
 
       this.init();
@@ -206,8 +207,11 @@ const minWidth =
      * @returns {void}
      */
     private layout(): void {
+      // Snapshot width before touching the DOM so the ResizeObserver skips
+      // the notification caused by layout() changing the root's height.
+      this.lastWidth = this.root.getBoundingClientRect().width;
+
       const columnCount = this.getColumnCount();
-      this.activeColumnCount = columnCount;
 
       // Pick up any items added to columns or the slot since the last layout.
       for (const col of this.columns) {
