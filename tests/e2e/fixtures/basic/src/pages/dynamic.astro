@@ -1,0 +1,22 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+---
+
+<Layout title="Dynamic — items appended after layout">
+  <h1>Dynamic insertion</h1>
+  <Masonry columns={1} breakpoints={{ 500: 2 }} gap="1rem" aria-label="Dynamic masonry grid">
+  </Masonry>
+  <button id="add-card" style="margin-top:1rem;">Add card</button>
+</Layout>
+
+<script>
+  document.getElementById("add-card")?.addEventListener("click", () => {
+    const col = document.querySelector("[data-masonry-column]") as HTMLElement | null
+    if (!col) return
+    const card = document.createElement("div")
+    card.dataset.testid = `dynamic-item-${Date.now()}`
+    card.style.cssText = "height:100px;background:#ccc;border-radius:8px;"
+    col.appendChild(card)
+  })
+</script>
