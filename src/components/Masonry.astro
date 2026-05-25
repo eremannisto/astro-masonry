@@ -133,6 +133,9 @@ const minWidth =
     private columns: HTMLElement[];
     private items: HTMLElement[];
     private resizeObserver: ResizeObserver;
+    private lastWidth: number;
+    private boundHandleKeyDown: (e: KeyboardEvent) => void;
+    private boundHandleRefresh: () => void;
 
     /**
      * @param {HTMLElement} root - The masonry root element for this instance.
@@ -143,8 +146,18 @@ const minWidth =
       this.slot = root.querySelector("[data-masonry-slot]")!;
       this.columns = Array.from(root.querySelectorAll("[data-masonry-column]"));
       this.items = Array.from(this.slot.children) as HTMLElement[];
+      this.lastWidth = -1;
+      this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+      this.boundHandleRefresh = () => this.layout();
 
-      this.resizeObserver = new ResizeObserver(() => {
+      // Only re-layout when the container width changes.
+      // Height-only changes (DevTools edits, content reflow, layout() itself
+      // moving items between slot and columns) are ignored, so editing a value
+      // in the inspector does not cause the selection to jump.
+      this.resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width;
+        if (width === undefined || width === this.lastWidth) return;
+        this.lastWidth = width;
         this.layout();
       });
 
@@ -181,7 +194,8 @@ const minWidth =
       }
 
       this.resizeObserver.observe(this.root);
-      this.root.addEventListener("keydown", this.handleKeyDown.bind(this));
+      this.root.addEventListener("keydown", this.boundHandleKeyDown);
+      this.root.addEventListener("masonry:refresh", this.boundHandleRefresh);
     }
 
     /**
@@ -193,7 +207,28 @@ const minWidth =
      * @returns {void}
      */
     private layout(): void {
+      // Snapshot width before touching the DOM so the ResizeObserver skips
+      // the notification caused by layout() changing the root's height.
+      this.lastWidth = this.root.getBoundingClientRect().width;
+
       const columnCount = this.getColumnCount();
+
+      // Pick up any items added to columns or the slot since the last layout.
+      for (const col of this.columns) {
+        for (const child of Array.from(col.children) as HTMLElement[]) {
+          if (!this.items.includes(child)) {
+            this.items.push(child);
+          }
+        }
+      }
+
+      if (this.slot.parentNode) {
+        for (const child of Array.from(this.slot.children) as HTMLElement[]) {
+          if (!this.items.includes(child)) {
+            this.items.push(child);
+          }
+        }
+      }
 
       this.columns.forEach((col, i) => {
         col.style.display = i < columnCount ? "flex" : "none";
@@ -446,6 +481,8 @@ const minWidth =
      */
     public destroy(): void {
       this.resizeObserver.disconnect();
+      this.root.removeEventListener("keydown", this.boundHandleKeyDown);
+      this.root.removeEventListener("masonry:refresh", this.boundHandleRefresh);
     }
   }
 

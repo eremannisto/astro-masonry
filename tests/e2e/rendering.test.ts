@@ -245,6 +245,52 @@ test.describe("Sequential", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Dynamic insertion
+// ---------------------------------------------------------------------------
+
+test.describe("Dynamic insertion", () => {
+  test("items appended to a column survive a column-count re-layout", async ({ page }) => {
+    // Start at 2 columns (breakpoint threshold is 500px)
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/dynamic")
+    await page.waitForFunction(() => !!document.querySelector("[data-masonry][data-masonry-ready]"))
+
+    // Append a card directly into the first column
+    await page.click("#add-card")
+
+    // Resize below the breakpoint so the column count changes 2→1, which
+    // triggers a full re-layout. The dynamically added card must survive it.
+    await page.setViewportSize({ width: 400, height: 600 })
+    await page.waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll("[data-masonry-column]")).filter(
+          (c) => (c as HTMLElement).style.display !== "none"
+        ).length === 1
+    )
+
+    await expect(
+      page.locator("[data-masonry-column] [data-testid^='dynamic-item-']")
+    ).toBeAttached()
+  })
+
+  test("masonry:refresh event triggers re-layout with newly added items", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/dynamic")
+    await page.waitForFunction(() => !!document.querySelector("[data-masonry][data-masonry-ready]"))
+
+    await page.click("#add-card")
+
+    await page.evaluate(() => {
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+    })
+
+    await expect(
+      page.locator("[data-masonry-column] [data-testid^='dynamic-item-']")
+    ).toBeAttached()
+  })
+})
+
+// ---------------------------------------------------------------------------
 // View transitions
 // ---------------------------------------------------------------------------
 
