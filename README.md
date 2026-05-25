@@ -29,12 +29,14 @@ yarn add @mannisto/astro-masonry
 import { Masonry } from "@mannisto/astro-masonry/components"
 ---
 
-<Masonry columns={3}>
+<Masonry autoColumns={280} columns={3}>
   {items.map((item) => (
     <div>{item}</div>
   ))}
 </Masonry>
 ```
+
+`autoColumns` fills as many columns as the container fits at the given minimum width. `columns` caps the maximum at 3.
 
 ## Props
 
@@ -136,6 +138,22 @@ Items are distributed left to right, top to bottom. Useful when reading order ma
 
 ![Sequential distribution](./docs/examples/sequential.png)
 *Items are distributed left to right, top to bottom, preserving reading order.*
+
+## Dynamic items
+
+Items can be added to the grid after initial render. Append them directly to any `[data-masonry-column]` element, then dispatch a `masonry:refresh` event on the root to redistribute:
+
+```js
+const root = document.querySelector("[data-masonry]")
+const column = root.querySelector("[data-masonry-column]")
+
+const card = document.createElement("div")
+column.appendChild(card)
+
+root.dispatchEvent(new CustomEvent("masonry:refresh"))
+```
+
+If your items change the column count (for example a viewport resize crosses a breakpoint), the grid re-layouts automatically and the new items are included without any extra steps.
 
 ## Keyboard navigation
 
