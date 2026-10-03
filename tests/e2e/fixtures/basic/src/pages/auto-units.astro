@@ -1,0 +1,41 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+
+// Each grid sits in a 1000px wrapper and asks for columns of at least 250px.
+// Padding, gap and rem units must all count, so each grid fits 3 columns.
+const items = Array.from({ length: 6 }, (_, i) => i + 1)
+---
+
+<Layout title="Auto columns — units, padding and gap">
+  <h1>Auto columns (units, padding, gap)</h1>
+  <div class="wrapper">
+    <Masonry autoColumns={250} gap={16} class="padded" aria-label="Padded grid">
+      {items.map((id) => <div class="tile" data-testid={`padded-${id}`} />)}
+    </Masonry>
+    <Masonry autoColumns={250} gap={16} aria-label="Gap grid">
+      {items.map((id) => <div class="tile" data-testid={`gap-${id}`} />)}
+    </Masonry>
+    <Masonry autoColumns="15rem" gap={16} aria-label="Rem grid">
+      {items.map((id) => <div class="tile" data-testid={`rem-${id}`} />)}
+    </Masonry>
+  </div>
+</Layout>
+
+<style>
+  .wrapper {
+    width: 1000px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  :global(.padded) {
+    padding: 50px;
+  }
+
+  .tile {
+    height: 100px;
+    background: var(--amber-100);
+  }
+</style>

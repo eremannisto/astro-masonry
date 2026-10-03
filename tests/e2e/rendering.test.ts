@@ -168,6 +168,32 @@ test.describe("Layout", () => {
     )
   })
 
+  test("autoColumns respects padding, gap and non-px units", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto("/auto-units")
+    await page.waitForFunction(
+      () => document.querySelectorAll("[data-masonry][data-masonry-ready]").length === 3
+    )
+
+    const grids = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-masonry]")).map((root) => {
+        const columns = Array.from(
+          root.querySelectorAll<HTMLElement>("[data-masonry-column]")
+        ).filter((c) => c.style.display !== "none")
+        return {
+          count: columns.length,
+          width: columns[0].getBoundingClientRect().width,
+        }
+      })
+    )
+
+    // Without padding, gap or unit handling these grids get 4, 4 and 12 columns.
+    for (const grid of grids) {
+      expect(grid.count).toBe(3)
+      expect(grid.width).toBeGreaterThanOrEqual(240)
+    }
+  })
+
   test("column count never drops below 1 with autoColumns", async ({ page }) => {
     await page.setViewportSize({ width: 100, height: 800 })
     await page.goto("/min-width")
@@ -287,6 +313,77 @@ test.describe("Dynamic insertion", () => {
     await expect(
       page.locator("[data-masonry-column] [data-testid^='dynamic-item-']")
     ).toBeAttached()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Stability
+// ---------------------------------------------------------------------------
+
+test.describe("Stability", () => {
+  /** Returns the item test IDs in each visible column, e.g. "item-1,item-4 | ...". */
+  const arrangement = (page: import("@playwright/test").Page) =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-masonry-column]"))
+        .filter((c) => c.style.display !== "none")
+        .map((c) =>
+          Array.from(c.children)
+            .map((el) => (el as HTMLElement).dataset.testid)
+            .join(",")
+        )
+        .join(" | ")
+    )
+
+  /**
+   * Counts layout() calls from now on. Every layout() stages items in
+   * [data-masonry-slot] again, so count how often the slot comes back.
+   */
+  const countLayouts = (page: import("@playwright/test").Page) =>
+    page.evaluateHandle(() => {
+      const counter = { count: 0 }
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of Array.from(mutation.addedNodes)) {
+            if (node instanceof HTMLElement && node.hasAttribute("data-masonry-slot")) {
+              counter.count++
+            }
+          }
+        }
+      }).observe(document.querySelector("[data-masonry]")!, { childList: true })
+      return counter
+    })
+
+  test("equal-height items keep their columns on small width changes", async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 800 })
+    await page.goto("/stability")
+    await ready(page)
+    const initial = await arrangement(page)
+
+    for (let width = 999; width >= 980; width--) {
+      await page.setViewportSize({ width, height: 800 })
+      await page.evaluate(
+        () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      )
+      expect(await arrangement(page)).toBe(initial)
+    }
+  })
+
+  test("a height change inside a padded root does not trigger a re-layout", async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 800 })
+    await page.goto("/stability")
+    await ready(page)
+
+    const layouts = await countLayouts(page)
+
+    // Simulate a DevTools edit that makes the first item taller.
+    await page.evaluate(() => {
+      const item = document.querySelector<HTMLElement>("[data-testid='item-1']")!
+      item.style.aspectRatio = "auto"
+      item.style.height = "600px"
+    })
+    await page.waitForTimeout(100)
+
+    expect(await layouts.evaluate((counter) => counter.count)).toBe(0)
   })
 })
 

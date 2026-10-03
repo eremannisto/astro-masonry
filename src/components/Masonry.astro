@@ -126,6 +126,8 @@ const minWidth =
   /** Radix for parsing integer data attributes. */
   const DECIMAL = 10;
 
+  /** Max column height difference in px that counts as equal. */
+  const HEIGHT_TOLERANCE = 1;
   class MasonryInstance {
     private root: HTMLElement;
     private grid: HTMLElement;
@@ -155,9 +157,10 @@ const minWidth =
       // moving items between slot and columns) are ignored, so editing a value
       // in the inspector does not cause the selection to jump.
       this.resizeObserver = new ResizeObserver((entries) => {
-        const width = entries[0]?.contentRect.width;
-        if (width === undefined || width === this.lastWidth) return;
-        this.lastWidth = width;
+        const box = entries[0]?.borderBoxSize?.[0];
+        if (!box) return;
+        const width = Math.round(box.inlineSize);
+        if (width === this.lastWidth) return;
         this.layout();
       });
 
@@ -209,7 +212,7 @@ const minWidth =
     private layout(): void {
       // Snapshot width before touching the DOM so the ResizeObserver skips
       // the notification caused by layout() changing the root's height.
-      this.lastWidth = this.root.getBoundingClientRect().width;
+      this.lastWidth = this.getRootWidth();
 
       const columnCount = this.getColumnCount();
 
@@ -259,9 +262,11 @@ const minWidth =
       this.items.forEach((item, i) => {
         const targetIndex = isSequential
           ? i % columnCount
-          : heights.indexOf(Math.min(...heights));
-        activeColumns[targetIndex].appendChild(item);
-        heights[targetIndex] += item.getBoundingClientRect().height;
+          : this.getShortestColumnIndex(heights);
+        const column = activeColumns[targetIndex];
+        column.appendChild(item);
+        // Measure the column itself so gaps and item margins are included.
+        heights[targetIndex] = column.getBoundingClientRect().height;
       });
 
       // Remove the slot container from the DOM so items exist exactly once —
@@ -271,6 +276,49 @@ const minWidth =
       }
 
       this.root.dataset.masonryReady = "true";
+    }
+
+    /**
+     * Returns the index of the leftmost column whose height is within
+     * HEIGHT_TOLERANCE of the shortest column. Without the tolerance,
+     * sub-pixel rounding decides ties between equal-height items, so items
+     * swap columns on almost every 1px change in container width.
+     *
+     * @param {number[]} heights - Current height of each active column.
+     * @returns {number}
+     */
+    private getShortestColumnIndex(heights: number[]): number {
+      const min = Math.min(...heights);
+      return heights.findIndex((height) => height - min <= HEIGHT_TOLERANCE);
+    }
+
+    /**
+     * Returns the rounded border-box width of the root. The ResizeObserver
+     * and layout() must compare the same box, else padding or a border on the
+     * root makes every height change look like a width change.
+     *
+     * @returns {number}
+     */
+    private getRootWidth(): number {
+      return this.root.offsetWidth;
+    }
+
+    /**
+     * Converts a CSS length (px, rem, em, %, calc(), ...) to px. A temporary
+     * probe inside the grid resolves % against the same width as the columns.
+     *
+     * @param {string} value - Any CSS length.
+     * @returns {number} The length in px, or 0 when the value is not valid.
+     */
+    private resolveLength(value: string): number {
+      if (!value) return 0;
+      const probe = document.createElement("div");
+      probe.style.cssText = "flex: none; visibility: hidden; height: 0;";
+      probe.style.width = value;
+      this.grid.appendChild(probe);
+      const px = parseFloat(getComputedStyle(probe).width) || 0;
+      probe.remove();
+      return px;
     }
 
     /**
@@ -285,9 +333,16 @@ const minWidth =
       const breakpointsRaw = gridData.breakpoints;
 
       if (minWidth) {
-        const minPx = parseFloat(minWidth);
-        const rootWidth = this.root.getBoundingClientRect().width;
-        const autoCount = Math.max(1, Math.floor(rootWidth / minPx));
+        // Resolve to px so units like rem, em and % work, then count how many
+        // columns of at least minPx fit in the content box, gaps included.
+        const minPx = this.resolveLength(minWidth);
+        const gapPx = this.resolveLength(
+          getComputedStyle(this.root).getPropertyValue("--masonry-gap").trim()
+        );
+        const available = parseFloat(getComputedStyle(this.grid).width);
+        const autoCount = minPx > 0
+          ? Math.max(1, Math.floor((available + gapPx) / (minPx + gapPx)))
+          : 1;
         const cap = gridData.columns !== undefined
           ? parseInt(gridData.columns, DECIMAL)
           : Infinity;

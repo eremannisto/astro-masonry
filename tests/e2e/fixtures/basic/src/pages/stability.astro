@@ -1,0 +1,30 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+
+// Equal square items: their heights depend on the column width, so
+// sub-pixel rounding differs per column. The root has padding on purpose.
+const items = Array.from({ length: 9 }, (_, i) => i + 1)
+---
+
+<Layout title="Stability — equal heights, padded root">
+  <h1>Stability</h1>
+  <Masonry columns={3} gap="1rem" class="padded" aria-label="Stability masonry grid">
+    {items.map((id) => (
+      <div class="square" data-testid={`item-${id}`} />
+    ))}
+  </Masonry>
+</Layout>
+
+<style>
+  :global(.padded) {
+    padding: 1rem;
+    border: 1px solid var(--zinc-300);
+  }
+
+  :global(.square) {
+    aspect-ratio: 1 / 1;
+    background: var(--blue-100);
+    border-radius: 8px;
+  }
+</style>
