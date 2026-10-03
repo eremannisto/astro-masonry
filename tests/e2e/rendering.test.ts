@@ -368,6 +368,22 @@ test.describe("Stability", () => {
     }
   })
 
+  test("a re-layout measures the items again", async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 800 })
+    await page.goto("/relayout")
+    await ready(page)
+    const expected = "item-1 | item-2,item-3,item-4"
+    expect(await arrangement(page)).toBe(expected)
+
+    // A new width starts a new layout. The slot is hidden after the first layout, so
+    // items measured in a hidden slot would get 0 px and alternate the columns.
+    await page.setViewportSize({ width: 700, height: 800 })
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+    )
+    expect(await arrangement(page)).toBe(expected)
+  })
+
   test("a height change inside a padded root does not trigger a re-layout", async ({ page }) => {
     await page.setViewportSize({ width: 1000, height: 800 })
     await page.goto("/stability")

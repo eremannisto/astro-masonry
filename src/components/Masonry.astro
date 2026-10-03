@@ -128,6 +128,7 @@ const minWidth =
 
   /** Max column height difference in px that counts as equal. */
   const HEIGHT_TOLERANCE = 1;
+
   class MasonryInstance {
     private root: HTMLElement;
     private grid: HTMLElement;
@@ -135,6 +136,7 @@ const minWidth =
     private columns: HTMLElement[];
     private items: HTMLElement[];
     private resizeObserver: ResizeObserver;
+    /** The root width of the last layout, from getRootWidth(). */
     private lastWidth: number;
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
     private boundHandleRefresh: () => void;
@@ -150,18 +152,17 @@ const minWidth =
       this.items = Array.from(this.slot.children) as HTMLElement[];
       this.lastWidth = -1;
       this.boundHandleKeyDown = this.handleKeyDown.bind(this);
-      this.boundHandleRefresh = () => this.layout();
-
-      // Only re-layout when the container width changes.
-      // Height-only changes (DevTools edits, content reflow, layout() itself
-      // moving items between slot and columns) are ignored, so editing a value
-      // in the inspector does not cause the selection to jump.
-      this.resizeObserver = new ResizeObserver((entries) => {
-        const box = entries[0]?.borderBoxSize?.[0];
-        if (!box) return;
-        const width = Math.round(box.inlineSize);
-        if (width === this.lastWidth) return;
+      this.boundHandleRefresh = () => {
         this.layout();
+      };
+
+      // Only a new width needs a new layout. Height-only changes (DevTools edits,
+      // content reflow, layout() itself moving items) keep the columns as they are, so
+      // editing a value in the inspector does not make the items jump.
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.getRootWidth() !== this.lastWidth) {
+          this.layout();
+        }
       });
 
       this.init();
@@ -210,7 +211,7 @@ const minWidth =
      * @returns {void}
      */
     private layout(): void {
-      // Snapshot width before touching the DOM so the ResizeObserver skips
+      // Snapshot the width before touching the DOM, so the ResizeObserver skips
       // the notification caused by layout() changing the root's height.
       this.lastWidth = this.getRootWidth();
 
@@ -251,22 +252,22 @@ const minWidth =
         this.slot.appendChild(item);
       });
 
-      // Force a synchronous reflow so getBoundingClientRect() returns
-      // up-to-date values for items sitting in the slot container.
-      void this.grid.offsetHeight;
-
       const activeColumns = this.columns.slice(0, columnCount);
-      const heights = new Array(columnCount).fill(0) as number[];
       const isSequential = !!this.grid.dataset.sequential;
+      const itemHeights = isSequential ? [] : this.measureItems(activeColumns[0]);
+      const gap = parseFloat(getComputedStyle(activeColumns[0]).rowGap) || 0;
+
+      // Each column height also counts one gap for each item. All non-empty columns get
+      // the same extra gap, so the order of the heights stays correct.
+      const heights = new Array(columnCount).fill(0) as number[];
 
       this.items.forEach((item, i) => {
         const targetIndex = isSequential
           ? i % columnCount
           : this.getShortestColumnIndex(heights);
-        const column = activeColumns[targetIndex];
-        column.appendChild(item);
-        // Measure the column itself so gaps and item margins are included.
-        heights[targetIndex] = column.getBoundingClientRect().height;
+
+        activeColumns[targetIndex].appendChild(item);
+        heights[targetIndex] += (itemHeights[i] ?? 0) + gap;
       });
 
       // Remove the slot container from the DOM so items exist exactly once —
@@ -276,6 +277,31 @@ const minWidth =
       }
 
       this.root.dataset.masonryReady = "true";
+    }
+
+    /**
+     * Returns the outer height of each item at the width of one column. The slot gets
+     * the column width, so text wraps the same as in the columns, and all items are
+     * measured after one reflow instead of one reflow for each item. The slot is
+     * visible only during the measurement: the CSS hides it after the first layout,
+     * and the browser does not paint between these steps.
+     *
+     * @param {HTMLElement} column - An active column, to read the column width from.
+     * @returns {number[]} The height of each item, margins included, in the order of the items.
+     */
+    private measureItems(column: HTMLElement): number[] {
+      this.slot.style.width = `${column.getBoundingClientRect().width}px`;
+      this.slot.style.display = "flex";
+
+      const heights = this.items.map((item) => {
+        const style = getComputedStyle(item);
+        const margins = parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+        return item.getBoundingClientRect().height + (margins || 0);
+      });
+
+      this.slot.style.width = "";
+      this.slot.style.display = "";
+      return heights;
     }
 
     /**
@@ -293,9 +319,10 @@ const minWidth =
     }
 
     /**
-     * Returns the rounded border-box width of the root. The ResizeObserver
-     * and layout() must compare the same box, else padding or a border on the
-     * root makes every height change look like a width change.
+     * Returns the rounded border-box width of the root. The ResizeObserver and layout()
+     * use this one function, so they always compare the same box and rounding. With
+     * the content box, padding or a border on the root would make a height change
+     * look like a width change.
      *
      * @returns {number}
      */

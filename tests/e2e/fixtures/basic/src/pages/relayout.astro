@@ -1,0 +1,31 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+
+// One tall item and three short items. Masonry puts the short items under each
+// other next to the tall item. Round-robin would alternate the columns.
+const items = [
+  { id: 1, height: 300 },
+  { id: 2, height: 100 },
+  { id: 3, height: 100 },
+  { id: 4, height: 100 },
+]
+---
+
+<Layout title="Re-layout — different heights">
+  <h1>Re-layout</h1>
+  <Masonry columns={2} gap="1rem" aria-label="Re-layout masonry grid">
+    {
+      items.map((item) => (
+        <div class="block" data-testid={`item-${item.id}`} style={`height: ${item.height}px`} />
+      ))
+    }
+  </Masonry>
+</Layout>
+
+<style>
+  :global(.block) {
+    background: var(--blue-100);
+    border-radius: 8px;
+  }
+</style>
