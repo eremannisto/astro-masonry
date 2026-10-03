@@ -153,7 +153,21 @@ column.appendChild(card)
 root.dispatchEvent(new CustomEvent("masonry:refresh"))
 ```
 
-If your items change the column count (for example a viewport resize crosses a breakpoint), the grid re-layouts automatically and the new items are included without any extra steps.
+When the width of the grid changes, the grid re-layouts automatically, and the new items are included without any extra steps.
+
+## Layout updates
+
+The grid re-layouts when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
+
+If the height of an item changes after the first layout, for example when a card opens or a lazy image loads, dispatch `masonry:refresh` on the root to balance the columns again.
+
+If the page can get a scrollbar, add `scrollbar-gutter: stable` to your page. A scrollbar that comes and goes changes the width of the grid, and a new layout can then add or remove the scrollbar again:
+
+```css
+html {
+  scrollbar-gutter: stable;
+}
+```
 
 ## Keyboard navigation
 
