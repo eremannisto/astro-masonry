@@ -135,3 +135,53 @@ test.describe("Keyboard navigation", () => {
     await expect(page.locator("[data-testid='link-6']")).toBeFocused()
   })
 })
+
+// Column layout for the refresh page (4 items, 2 cols, sequential):
+//   Col 0: item-1 (tabindex -1), item-3 (contains button-3)
+//   Col 1: item-2 (contains field-2), item-4 (focusable)
+
+test.describe("Keyboard navigation with fields and focusable items", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/refresh")
+    await ready(page)
+  })
+
+  test("a focusable item gets the focus itself", async ({ page }) => {
+    await page.focus("[data-testid='button-3']")
+    await page.keyboard.press("ArrowRight")
+    await expect(page.locator("[data-testid='item-4']")).toBeFocused()
+  })
+
+  test("an item with a negative tabindex gets the focus itself", async ({ page }) => {
+    await page.focus("[data-testid='button-3']")
+    await page.keyboard.press("ArrowUp")
+    await expect(page.locator("[data-testid='item-1']")).toBeFocused()
+  })
+
+  test("arrow keys in a text field move the cursor, not the focus", async ({ page }) => {
+    await page.focus("[data-testid='field-2']")
+    await page.keyboard.press("ArrowDown")
+    await page.keyboard.press("ArrowLeft")
+    await expect(page.locator("[data-testid='field-2']")).toBeFocused()
+  })
+
+  test("arrow keys that an item handled are not used", async ({ page }) => {
+    await page.evaluate(() => {
+      document
+        .querySelector("[data-testid='item-1']")!
+        .addEventListener("keydown", (event) => event.preventDefault())
+    })
+    await page.focus("[data-testid='item-1']")
+    await page.keyboard.press("ArrowDown")
+    await expect(page.locator("[data-testid='item-1']")).toBeFocused()
+  })
+
+  test("the focused element keeps the focus after a refresh", async ({ page }) => {
+    await page.focus("[data-testid='button-3']")
+    await page.evaluate(() => {
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+    })
+    await expect(page.locator("[data-testid='button-3']")).toBeFocused()
+  })
+})

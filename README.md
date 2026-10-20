@@ -193,6 +193,12 @@ When focus is inside the grid, arrow keys move between items:
 | `ArrowLeft` | Item in the previous column at the same vertical position |
 | `ArrowRight` | Item in the next column at the same vertical position |
 
+When an item can get focus itself, for example with `tabindex="0"`, the item gets the focus. An item with `tabindex="-1"` also gets the focus: then only the arrow keys reach it, and the Tab key skips it. Otherwise its first link, button or field gets the focus.
+
+The grid does not use the arrow keys when focus is in a form field, such as an `input` or a `textarea`. An item can also use the arrow keys itself: when its handler calls `event.preventDefault()`, the grid does not move the focus.
+
+After a layout, the focused element in the grid keeps the focus.
+
 ![Keyboard navigation](./docs/examples/keyboard.gif)
 
 ## Accessibility

@@ -123,6 +123,9 @@ const minWidth =
   const FOCUSABLE_SELECTOR =
     'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+  /** Selector for fields that use the arrow keys to move the text cursor or change the value. */
+  const FIELD_SELECTOR = 'input, select, textarea, [contenteditable]:not([contenteditable="false"])';
+
   /** Radix for parsing integer data attributes. */
   const DECIMAL = 10;
 
@@ -466,6 +469,8 @@ const minWidth =
      * - ArrowUp / ArrowDown move within the current column.
      * - ArrowLeft / ArrowRight move to the adjacent column, targeting the item
      *   that occupies the same vertical position as the current item's top edge.
+     * - Keys in a form field, and keys that an item already handled with
+     *   preventDefault(), are not used.
      *
      * @param {KeyboardEvent} e
      * @returns {void}
@@ -473,13 +478,13 @@ const minWidth =
     private handleKeyDown(e: KeyboardEvent): void {
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
-      if (!arrows.includes(e.key)) {
+      if (e.defaultPrevented || !arrows.includes(e.key)) {
         return;
       }
 
       const focused = document.activeElement as HTMLElement;
 
-      if (!focused) {
+      if (!focused || focused.matches(FIELD_SELECTOR)) {
         return;
       }
 
@@ -564,14 +569,18 @@ const minWidth =
     }
 
     /**
-     * Moves focus to an item. Prefers the first focusable descendant (link,
-     * button, etc.) over the item element itself.
+     * Moves focus to an item. A focusable item gets the focus itself, also an item
+     * with a negative tabindex that only the arrow keys can reach. Otherwise the
+     * first focusable descendant (link, button, etc.) gets the focus.
      *
      * @param {HTMLElement} item
      * @returns {void}
      */
     private focusItem(item: HTMLElement): void {
-      const focusable = item.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      const focusable =
+        item.matches(FOCUSABLE_SELECTOR) || item.hasAttribute("tabindex")
+          ? item
+          : item.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
 
       if (focusable) {
         focusable.focus();
