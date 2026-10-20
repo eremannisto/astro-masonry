@@ -317,6 +317,37 @@ test.describe("Dynamic insertion", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Hidden grid
+// ---------------------------------------------------------------------------
+
+test.describe("Hidden grid", () => {
+  test("autoColumns in a hidden grid does not throw, and lays out when shown", async ({ page }) => {
+    const errors: string[] = []
+    page.on("pageerror", (error) => errors.push(error.message))
+
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/auto-hidden")
+    await page.waitForSelector("[data-masonry][data-masonry-ready]", { state: "attached" })
+
+    await page.evaluate(() => {
+      document.querySelector<HTMLElement>(".hidden-grid")!.hidden = false
+    })
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            Array.from(document.querySelectorAll<HTMLElement>("[data-masonry-column]")).filter(
+              (c) => c.style.display !== "none" && c.children.length > 0
+            ).length
+        )
+      )
+      .toBe(3)
+    expect(errors).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Refresh
 // ---------------------------------------------------------------------------
 

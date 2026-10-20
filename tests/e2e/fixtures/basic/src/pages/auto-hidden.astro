@@ -1,0 +1,25 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+---
+
+<Layout title="Auto hidden — autoColumns in a hidden grid">
+  <h1>Auto columns in a hidden grid</h1>
+  <Masonry autoColumns={200} gap="1rem" aria-label="Hidden auto masonry grid" class="hidden-grid">
+    <div class="item" data-testid="item-1">1</div>
+    <div class="item" data-testid="item-2">2</div>
+    <div class="item" data-testid="item-3">3</div>
+  </Masonry>
+</Layout>
+
+<script>
+  document.querySelector<HTMLElement>(".hidden-grid")!.hidden = true
+</script>
+
+<style>
+  .item {
+    height: 100px;
+    background: #ccc;
+    border-radius: 8px;
+  }
+</style>

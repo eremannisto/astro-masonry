@@ -174,6 +174,8 @@ The grid re-layouts when its width changes, because the items then get a new hei
 
 During a layout, the grid keeps its current height, so the page keeps its scroll position.
 
+A grid can start hidden, for example with the `hidden` attribute. With `autoColumns`, a hidden grid gets one column. When it becomes visible, its width changes, and it lays out again.
+
 If the height of an item changes after the first layout, for example when a card opens or a lazy image loads, dispatch `masonry:refresh` on the root to balance the columns again.
 
 If the page can get a scrollbar, add `scrollbar-gutter: stable` to your page. A scrollbar that comes and goes changes the width of the grid, and a new layout can then add or remove the scrollbar again:

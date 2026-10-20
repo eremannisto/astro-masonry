@@ -454,7 +454,8 @@ const minWidth =
         const gapPx = this.resolveLength(
           getComputedStyle(this.root).getPropertyValue("--masonry-gap").trim()
         );
-        const available = parseFloat(getComputedStyle(this.grid).width);
+        // A hidden grid has the width "auto". Count it as 0, so the grid gets one column.
+        const available = parseFloat(getComputedStyle(this.grid).width) || 0;
         const autoCount = minPx > 0
           ? Math.max(1, Math.floor((available + gapPx) / (minPx + gapPx)))
           : 1;
