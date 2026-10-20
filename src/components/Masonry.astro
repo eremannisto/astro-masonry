@@ -139,7 +139,7 @@ const minWidth =
     /** The root width of the last layout, from getRootWidth(). */
     private lastWidth: number;
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
-    private boundHandleRefresh: () => void;
+    private boundHandleRefresh: (e: Event) => void;
 
     /**
      * @param {HTMLElement} root - The masonry root element for this instance.
@@ -152,9 +152,7 @@ const minWidth =
       this.items = Array.from(this.slot.children) as HTMLElement[];
       this.lastWidth = -1;
       this.boundHandleKeyDown = this.handleKeyDown.bind(this);
-      this.boundHandleRefresh = () => {
-        this.layout();
-      };
+      this.boundHandleRefresh = this.handleRefresh.bind(this);
 
       // Only a new width needs a new layout. Height-only changes (DevTools edits,
       // content reflow, layout() itself moving items) keep the columns as they are, so
@@ -200,6 +198,32 @@ const minWidth =
       this.resizeObserver.observe(this.root);
       this.root.addEventListener("keydown", this.boundHandleKeyDown);
       this.root.addEventListener("masonry:refresh", this.boundHandleRefresh);
+    }
+
+    /**
+     * Handles the `masonry:refresh` event. When `detail.items` is set, the
+     * items get that order, and items that are not in the list are dropped.
+     * Without `detail.items`, the order stays, and items that are no longer
+     * in the document are dropped.
+     *
+     * @param {Event} e - The refresh event, optionally with `detail.items`.
+     * @returns {void}
+     */
+    private handleRefresh(e: Event): void {
+      const items = (e as CustomEvent<{ items?: HTMLElement[] } | null>).detail?.items;
+
+      if (items) {
+        this.items.forEach((item) => {
+          if (!items.includes(item)) {
+            item.remove();
+          }
+        });
+        this.items = [...items];
+      } else {
+        this.items = this.items.filter((item) => item.isConnected);
+      }
+
+      this.layout();
     }
 
     /**

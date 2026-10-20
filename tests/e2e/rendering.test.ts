@@ -317,6 +317,54 @@ test.describe("Dynamic insertion", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Refresh
+// ---------------------------------------------------------------------------
+
+test.describe("Refresh", () => {
+  /** Returns the item test IDs in each visible column, e.g. "item-1,item-3 | item-2,item-4". */
+  const arrangement = (page: import("@playwright/test").Page) =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-masonry-column]"))
+        .filter((c) => c.style.display !== "none")
+        .map((c) =>
+          Array.from(c.children)
+            .map((el) => (el as HTMLElement).dataset.testid)
+            .join(",")
+        )
+        .join(" | ")
+    )
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/refresh")
+    await ready(page)
+  })
+
+  test("a removed item does not come back after a refresh", async ({ page }) => {
+    await page.evaluate(() => {
+      document.querySelector("[data-testid='item-2']")!.remove()
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+    })
+
+    expect(await arrangement(page)).toBe("item-1,item-4 | item-3")
+  })
+
+  test("detail.items sets the order and drops the other items", async ({ page }) => {
+    await page.evaluate(() => {
+      const ids = ["item-4", "item-3", "item-1"]
+      const items = ids.map((id) => document.querySelector(`[data-testid='${id}']`)!)
+      document
+        .querySelector("[data-masonry]")!
+        .dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items } }))
+    })
+
+    expect(await arrangement(page)).toBe("item-4,item-1 | item-3")
+    await expect(page.locator("[data-testid='item-2']")).not.toBeAttached()
+  })
+
+})
+
+// ---------------------------------------------------------------------------
 // Stability
 // ---------------------------------------------------------------------------
 

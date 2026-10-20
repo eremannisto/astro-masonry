@@ -155,6 +155,19 @@ root.dispatchEvent(new CustomEvent("masonry:refresh"))
 
 When the width of the grid changes, the grid re-layouts automatically, and the new items are included without any extra steps.
 
+To remove an item, remove it from the DOM, then dispatch `masonry:refresh`. The grid drops items that are no longer in the document:
+
+```js
+card.remove()
+root.dispatchEvent(new CustomEvent("masonry:refresh"))
+```
+
+To change the order, send all the items in the new order in `detail.items`. The grid removes items that are not in the list. Items in the list that are not in the grid yet are added:
+
+```js
+root.dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items: [third, first, second] } }))
+```
+
 ## Layout updates
 
 The grid re-layouts when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
