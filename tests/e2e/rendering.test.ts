@@ -362,6 +362,45 @@ test.describe("Refresh", () => {
     await expect(page.locator("[data-testid='item-2']")).not.toBeAttached()
   })
 
+  test("in sequential mode, a refresh does not move items that are in place", async ({ page }) => {
+    const moves = await page.evaluate(() => {
+      let count = 0
+      const observer = new MutationObserver((list) => {
+        for (const mutation of list)
+          count += mutation.addedNodes.length + mutation.removedNodes.length
+      })
+      for (const column of document.querySelectorAll("[data-masonry-column]")) {
+        observer.observe(column, { childList: true })
+      }
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+      count += observer
+        .takeRecords()
+        .reduce((sum, m) => sum + m.addedNodes.length + m.removedNodes.length, 0)
+      observer.disconnect()
+      return count
+    })
+
+    expect(moves).toBe(0)
+  })
+
+  test("a refresh keeps the scroll position of the page", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 150 })
+    const scrolled = await page.evaluate(() => {
+      scrollTo(0, document.documentElement.scrollHeight)
+      return scrollY
+    })
+    expect(scrolled).toBeGreaterThan(0)
+
+    await page.evaluate(() => {
+      const ids = ["item-4", "item-3", "item-2", "item-1"]
+      const items = ids.map((id) => document.querySelector(`[data-testid='${id}']`)!)
+      document
+        .querySelector("[data-masonry]")!
+        .dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items } }))
+    })
+
+    expect(await page.evaluate(() => scrollY)).toBe(scrolled)
+  })
 })
 
 // ---------------------------------------------------------------------------

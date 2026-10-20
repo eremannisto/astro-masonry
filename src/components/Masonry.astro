@@ -242,6 +242,16 @@ const minWidth =
       // the notification caused by layout() changing the root's height.
       this.lastWidth = this.getRootWidth();
 
+      // Moving an element in the DOM removes its focus, so keep the focused element
+      // and give the focus back after the items are in their new columns.
+      const focused = document.activeElement;
+      const focusedInside = focused instanceof HTMLElement && this.root.contains(focused);
+
+      // The columns are empty while the items move, so keep the current height. Otherwise
+      // the page gets shorter for a moment, and the browser loses the scroll position.
+      const minHeight = this.root.style.minHeight;
+      this.root.style.minHeight = `${this.root.offsetHeight}px`;
+
       const columnCount = this.getColumnCount();
 
       // Pick up any items added to columns or the slot since the last layout.
@@ -263,11 +273,74 @@ const minWidth =
 
       this.columns.forEach((col, i) => {
         col.style.display = i < columnCount ? "flex" : "none";
+      });
 
+      const activeColumns = this.columns.slice(0, columnCount);
+
+      if (this.grid.dataset.sequential) {
+        this.placeInOrder(activeColumns);
+      } else {
+        this.placeByHeight(activeColumns);
+      }
+
+      // Remove the slot container from the DOM so items exist exactly once —
+      // no duplication for screen readers or keyboard tab order.
+      if (this.slot.parentNode) {
+        this.slot.parentNode.removeChild(this.slot);
+      }
+
+      this.root.style.minHeight = minHeight;
+
+      if (focusedInside && focused.isConnected && document.activeElement !== focused) {
+        focused.focus({ preventScroll: true });
+      }
+
+      this.root.dataset.masonryReady = "true";
+    }
+
+    /**
+     * Puts the items left to right, top to bottom. An item that is already in
+     * its place stays there, because a move in the DOM removes the focus and
+     * restarts animations. No measurement is necessary in this mode.
+     *
+     * @param {HTMLElement[]} activeColumns - The visible columns.
+     * @returns {void}
+     */
+    private placeInOrder(activeColumns: HTMLElement[]): void {
+      const count = activeColumns.length;
+
+      this.items.forEach((item, i) => {
+        const column = activeColumns[i % count];
+        const current = column.children[Math.floor(i / count)] ?? null;
+
+        if (current !== item) {
+          column.insertBefore(item, current);
+        }
+      });
+
+      // Anything that is still in a column after this is not an item.
+      for (const col of this.columns) {
+        for (const child of Array.from(col.children)) {
+          if (!this.items.includes(child as HTMLElement)) {
+            child.remove();
+          }
+        }
+      }
+    }
+
+    /**
+     * Puts each item into the shortest column. The items are first staged in the
+     * slot, so that their heights can be measured at the width of one column.
+     *
+     * @param {HTMLElement[]} activeColumns - The visible columns.
+     * @returns {void}
+     */
+    private placeByHeight(activeColumns: HTMLElement[]): void {
+      for (const col of this.columns) {
         while (col.firstChild) {
           col.firstChild.remove();
         }
-      });
+      }
 
       // Stage items in the slot for measurement. On first layout they are
       // already there. On subsequent layouts they are moved back from columns.
@@ -279,31 +352,19 @@ const minWidth =
         this.slot.appendChild(item);
       });
 
-      const activeColumns = this.columns.slice(0, columnCount);
-      const isSequential = !!this.grid.dataset.sequential;
-      const itemHeights = isSequential ? [] : this.measureItems(activeColumns[0]);
+      const itemHeights = this.measureItems(activeColumns[0]);
       const gap = parseFloat(getComputedStyle(activeColumns[0]).rowGap) || 0;
 
       // Each column height also counts one gap for each item. All non-empty columns get
       // the same extra gap, so the order of the heights stays correct.
-      const heights = new Array(columnCount).fill(0) as number[];
+      const heights = new Array(activeColumns.length).fill(0) as number[];
 
       this.items.forEach((item, i) => {
-        const targetIndex = isSequential
-          ? i % columnCount
-          : this.getShortestColumnIndex(heights);
+        const targetIndex = this.getShortestColumnIndex(heights);
 
         activeColumns[targetIndex].appendChild(item);
-        heights[targetIndex] += (itemHeights[i] ?? 0) + gap;
+        heights[targetIndex] += itemHeights[i] + gap;
       });
-
-      // Remove the slot container from the DOM so items exist exactly once —
-      // no duplication for screen readers or keyboard tab order.
-      if (this.slot.parentNode) {
-        this.slot.parentNode.removeChild(this.slot);
-      }
-
-      this.root.dataset.masonryReady = "true";
     }
 
     /**

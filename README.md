@@ -172,6 +172,8 @@ root.dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items: [third,
 
 The grid re-layouts when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
 
+During a layout, the grid keeps its current height, so the page keeps its scroll position.
+
 If the height of an item changes after the first layout, for example when a card opens or a lazy image loads, dispatch `masonry:refresh` on the root to balance the columns again.
 
 If the page can get a scrollbar, add `scrollbar-gutter: stable` to your page. A scrollbar that comes and goes changes the width of the grid, and a new layout can then add or remove the scrollbar again:
