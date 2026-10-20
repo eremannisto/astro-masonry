@@ -1,0 +1,30 @@
+---
+import { Masonry } from "@mannisto/astro-masonry/components"
+import Layout from "../components/Layout.astro"
+
+// sequential=true with 2 columns:
+//   Col 0: items 1 (tabindex -1), 3
+//   Col 1: items 2, 4
+---
+
+<Layout title="Refresh — remove and reorder items">
+  <h1>Refresh</h1>
+  <Masonry columns={2} sequential gap="1rem" aria-label="Refresh masonry grid">
+    <div class="item" data-testid="item-1" tabindex="-1">1</div>
+    <div class="item" data-testid="item-2">
+      <textarea data-testid="field-2" aria-label="Text 2"></textarea>
+    </div>
+    <div class="item" data-testid="item-3">
+      <button data-testid="button-3">3</button>
+    </div>
+    <div class="item" data-testid="item-4" tabindex="0">4</div>
+  </Masonry>
+</Layout>
+
+<style>
+  .item {
+    height: 100px;
+    background: #ccc;
+    border-radius: 8px;
+  }
+</style>

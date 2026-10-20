@@ -123,6 +123,9 @@ const minWidth =
   const FOCUSABLE_SELECTOR =
     'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+  /** Selector for fields that use the arrow keys to move the text cursor or change the value. */
+  const FIELD_SELECTOR = 'input, select, textarea, [contenteditable]:not([contenteditable="false"])';
+
   /** Radix for parsing integer data attributes. */
   const DECIMAL = 10;
 
@@ -139,7 +142,7 @@ const minWidth =
     /** The root width of the last layout, from getRootWidth(). */
     private lastWidth: number;
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
-    private boundHandleRefresh: () => void;
+    private boundHandleRefresh: (e: Event) => void;
 
     /**
      * @param {HTMLElement} root - The masonry root element for this instance.
@@ -152,9 +155,7 @@ const minWidth =
       this.items = Array.from(this.slot.children) as HTMLElement[];
       this.lastWidth = -1;
       this.boundHandleKeyDown = this.handleKeyDown.bind(this);
-      this.boundHandleRefresh = () => {
-        this.layout();
-      };
+      this.boundHandleRefresh = this.handleRefresh.bind(this);
 
       // Only a new width needs a new layout. Height-only changes (DevTools edits,
       // content reflow, layout() itself moving items) keep the columns as they are, so
@@ -203,6 +204,32 @@ const minWidth =
     }
 
     /**
+     * Handles the `masonry:refresh` event. When `detail.items` is set, the
+     * items get that order, and items that are not in the list are dropped.
+     * Without `detail.items`, the order stays, and items that are no longer
+     * in the document are dropped.
+     *
+     * @param {Event} e - The refresh event, optionally with `detail.items`.
+     * @returns {void}
+     */
+    private handleRefresh(e: Event): void {
+      const items = (e as CustomEvent<{ items?: HTMLElement[] } | null>).detail?.items;
+
+      if (items) {
+        this.items.forEach((item) => {
+          if (!items.includes(item)) {
+            item.remove();
+          }
+        });
+        this.items = [...items];
+      } else {
+        this.items = this.items.filter((item) => item.isConnected);
+      }
+
+      this.layout();
+    }
+
+    /**
      * Moves items from the slot into columns using a shortest-column algorithm,
      * then removes the slot node from the DOM so items exist exactly once.
      * On subsequent layouts (resize), items are staged back into the slot
@@ -214,6 +241,16 @@ const minWidth =
       // Snapshot the width before touching the DOM, so the ResizeObserver skips
       // the notification caused by layout() changing the root's height.
       this.lastWidth = this.getRootWidth();
+
+      // Moving an element in the DOM removes its focus, so keep the focused element
+      // and give the focus back after the items are in their new columns.
+      const focused = document.activeElement;
+      const focusedInside = focused instanceof HTMLElement && this.root.contains(focused);
+
+      // The columns are empty while the items move, so keep the current height. Otherwise
+      // the page gets shorter for a moment, and the browser loses the scroll position.
+      const minHeight = this.root.style.minHeight;
+      this.root.style.minHeight = `${this.root.offsetHeight}px`;
 
       const columnCount = this.getColumnCount();
 
@@ -236,11 +273,74 @@ const minWidth =
 
       this.columns.forEach((col, i) => {
         col.style.display = i < columnCount ? "flex" : "none";
+      });
 
+      const activeColumns = this.columns.slice(0, columnCount);
+
+      if (this.grid.dataset.sequential) {
+        this.placeInOrder(activeColumns);
+      } else {
+        this.placeByHeight(activeColumns);
+      }
+
+      // Remove the slot container from the DOM so items exist exactly once —
+      // no duplication for screen readers or keyboard tab order.
+      if (this.slot.parentNode) {
+        this.slot.parentNode.removeChild(this.slot);
+      }
+
+      this.root.style.minHeight = minHeight;
+
+      if (focusedInside && focused.isConnected && document.activeElement !== focused) {
+        focused.focus({ preventScroll: true });
+      }
+
+      this.root.dataset.masonryReady = "true";
+    }
+
+    /**
+     * Puts the items left to right, top to bottom. An item that is already in
+     * its place stays there, because a move in the DOM removes the focus and
+     * restarts animations. No measurement is necessary in this mode.
+     *
+     * @param {HTMLElement[]} activeColumns - The visible columns.
+     * @returns {void}
+     */
+    private placeInOrder(activeColumns: HTMLElement[]): void {
+      const count = activeColumns.length;
+
+      this.items.forEach((item, i) => {
+        const column = activeColumns[i % count];
+        const current = column.children[Math.floor(i / count)] ?? null;
+
+        if (current !== item) {
+          column.insertBefore(item, current);
+        }
+      });
+
+      // Anything that is still in a column after this is not an item.
+      for (const col of this.columns) {
+        for (const child of Array.from(col.children)) {
+          if (!this.items.includes(child as HTMLElement)) {
+            child.remove();
+          }
+        }
+      }
+    }
+
+    /**
+     * Puts each item into the shortest column. The items are first staged in the
+     * slot, so that their heights can be measured at the width of one column.
+     *
+     * @param {HTMLElement[]} activeColumns - The visible columns.
+     * @returns {void}
+     */
+    private placeByHeight(activeColumns: HTMLElement[]): void {
+      for (const col of this.columns) {
         while (col.firstChild) {
           col.firstChild.remove();
         }
-      });
+      }
 
       // Stage items in the slot for measurement. On first layout they are
       // already there. On subsequent layouts they are moved back from columns.
@@ -252,31 +352,19 @@ const minWidth =
         this.slot.appendChild(item);
       });
 
-      const activeColumns = this.columns.slice(0, columnCount);
-      const isSequential = !!this.grid.dataset.sequential;
-      const itemHeights = isSequential ? [] : this.measureItems(activeColumns[0]);
+      const itemHeights = this.measureItems(activeColumns[0]);
       const gap = parseFloat(getComputedStyle(activeColumns[0]).rowGap) || 0;
 
       // Each column height also counts one gap for each item. All non-empty columns get
       // the same extra gap, so the order of the heights stays correct.
-      const heights = new Array(columnCount).fill(0) as number[];
+      const heights = new Array(activeColumns.length).fill(0) as number[];
 
       this.items.forEach((item, i) => {
-        const targetIndex = isSequential
-          ? i % columnCount
-          : this.getShortestColumnIndex(heights);
+        const targetIndex = this.getShortestColumnIndex(heights);
 
         activeColumns[targetIndex].appendChild(item);
-        heights[targetIndex] += (itemHeights[i] ?? 0) + gap;
+        heights[targetIndex] += itemHeights[i] + gap;
       });
-
-      // Remove the slot container from the DOM so items exist exactly once —
-      // no duplication for screen readers or keyboard tab order.
-      if (this.slot.parentNode) {
-        this.slot.parentNode.removeChild(this.slot);
-      }
-
-      this.root.dataset.masonryReady = "true";
     }
 
     /**
@@ -366,7 +454,8 @@ const minWidth =
         const gapPx = this.resolveLength(
           getComputedStyle(this.root).getPropertyValue("--masonry-gap").trim()
         );
-        const available = parseFloat(getComputedStyle(this.grid).width);
+        // A hidden grid has the width "auto". Count it as 0, so the grid gets one column.
+        const available = parseFloat(getComputedStyle(this.grid).width) || 0;
         const autoCount = minPx > 0
           ? Math.max(1, Math.floor((available + gapPx) / (minPx + gapPx)))
           : 1;
@@ -442,6 +531,8 @@ const minWidth =
      * - ArrowUp / ArrowDown move within the current column.
      * - ArrowLeft / ArrowRight move to the adjacent column, targeting the item
      *   that occupies the same vertical position as the current item's top edge.
+     * - Keys in a form field, and keys that an item already handled with
+     *   preventDefault(), are not used.
      *
      * @param {KeyboardEvent} e
      * @returns {void}
@@ -449,13 +540,13 @@ const minWidth =
     private handleKeyDown(e: KeyboardEvent): void {
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
-      if (!arrows.includes(e.key)) {
+      if (e.defaultPrevented || !arrows.includes(e.key)) {
         return;
       }
 
       const focused = document.activeElement as HTMLElement;
 
-      if (!focused) {
+      if (!focused || focused.matches(FIELD_SELECTOR)) {
         return;
       }
 
@@ -540,14 +631,18 @@ const minWidth =
     }
 
     /**
-     * Moves focus to an item. Prefers the first focusable descendant (link,
-     * button, etc.) over the item element itself.
+     * Moves focus to an item. A focusable item gets the focus itself, also an item
+     * with a negative tabindex that only the arrow keys can reach. Otherwise the
+     * first focusable descendant (link, button, etc.) gets the focus.
      *
      * @param {HTMLElement} item
      * @returns {void}
      */
     private focusItem(item: HTMLElement): void {
-      const focusable = item.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      const focusable =
+        item.matches(FOCUSABLE_SELECTOR) || item.hasAttribute("tabindex")
+          ? item
+          : item.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
 
       if (focusable) {
         focusable.focus();

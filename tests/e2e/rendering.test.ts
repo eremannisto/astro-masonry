@@ -317,6 +317,124 @@ test.describe("Dynamic insertion", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Hidden grid
+// ---------------------------------------------------------------------------
+
+test.describe("Hidden grid", () => {
+  test("autoColumns in a hidden grid does not throw, and lays out when shown", async ({ page }) => {
+    const errors: string[] = []
+    page.on("pageerror", (error) => errors.push(error.message))
+
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/auto-hidden")
+    await page.waitForSelector("[data-masonry][data-masonry-ready]", { state: "attached" })
+
+    await page.evaluate(() => {
+      document.querySelector<HTMLElement>(".hidden-grid")!.hidden = false
+    })
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            Array.from(document.querySelectorAll<HTMLElement>("[data-masonry-column]")).filter(
+              (c) => c.style.display !== "none" && c.children.length > 0
+            ).length
+        )
+      )
+      .toBe(3)
+    expect(errors).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Refresh
+// ---------------------------------------------------------------------------
+
+test.describe("Refresh", () => {
+  /** Returns the item test IDs in each visible column, e.g. "item-1,item-3 | item-2,item-4". */
+  const arrangement = (page: import("@playwright/test").Page) =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-masonry-column]"))
+        .filter((c) => c.style.display !== "none")
+        .map((c) =>
+          Array.from(c.children)
+            .map((el) => (el as HTMLElement).dataset.testid)
+            .join(",")
+        )
+        .join(" | ")
+    )
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 })
+    await page.goto("/refresh")
+    await ready(page)
+  })
+
+  test("a removed item does not come back after a refresh", async ({ page }) => {
+    await page.evaluate(() => {
+      document.querySelector("[data-testid='item-2']")!.remove()
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+    })
+
+    expect(await arrangement(page)).toBe("item-1,item-4 | item-3")
+  })
+
+  test("detail.items sets the order and drops the other items", async ({ page }) => {
+    await page.evaluate(() => {
+      const ids = ["item-4", "item-3", "item-1"]
+      const items = ids.map((id) => document.querySelector(`[data-testid='${id}']`)!)
+      document
+        .querySelector("[data-masonry]")!
+        .dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items } }))
+    })
+
+    expect(await arrangement(page)).toBe("item-4,item-1 | item-3")
+    await expect(page.locator("[data-testid='item-2']")).not.toBeAttached()
+  })
+
+  test("in sequential mode, a refresh does not move items that are in place", async ({ page }) => {
+    const moves = await page.evaluate(() => {
+      let count = 0
+      const observer = new MutationObserver((list) => {
+        for (const mutation of list)
+          count += mutation.addedNodes.length + mutation.removedNodes.length
+      })
+      for (const column of document.querySelectorAll("[data-masonry-column]")) {
+        observer.observe(column, { childList: true })
+      }
+      document.querySelector("[data-masonry]")!.dispatchEvent(new CustomEvent("masonry:refresh"))
+      count += observer
+        .takeRecords()
+        .reduce((sum, m) => sum + m.addedNodes.length + m.removedNodes.length, 0)
+      observer.disconnect()
+      return count
+    })
+
+    expect(moves).toBe(0)
+  })
+
+  test("a refresh keeps the scroll position of the page", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 150 })
+    const scrolled = await page.evaluate(() => {
+      scrollTo(0, document.documentElement.scrollHeight)
+      return scrollY
+    })
+    expect(scrolled).toBeGreaterThan(0)
+
+    await page.evaluate(() => {
+      const ids = ["item-4", "item-3", "item-2", "item-1"]
+      const items = ids.map((id) => document.querySelector(`[data-testid='${id}']`)!)
+      document
+        .querySelector("[data-masonry]")!
+        .dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items } }))
+    })
+
+    expect(await page.evaluate(() => scrollY)).toBe(scrolled)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Stability
 // ---------------------------------------------------------------------------
 

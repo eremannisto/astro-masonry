@@ -155,9 +155,26 @@ root.dispatchEvent(new CustomEvent("masonry:refresh"))
 
 When the width of the grid changes, the grid re-layouts automatically, and the new items are included without any extra steps.
 
+To remove an item, remove it from the DOM, then dispatch `masonry:refresh`. The grid drops items that are no longer in the document:
+
+```js
+card.remove()
+root.dispatchEvent(new CustomEvent("masonry:refresh"))
+```
+
+To change the order, send all the items in the new order in `detail.items`. The grid removes items that are not in the list. Items in the list that are not in the grid yet are added:
+
+```js
+root.dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items: [third, first, second] } }))
+```
+
 ## Layout updates
 
 The grid re-layouts when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
+
+During a layout, the grid keeps its current height, so the page keeps its scroll position.
+
+A grid can start hidden, for example with the `hidden` attribute. With `autoColumns`, a hidden grid gets one column. When it becomes visible, its width changes, and it lays out again.
 
 If the height of an item changes after the first layout, for example when a card opens or a lazy image loads, dispatch `masonry:refresh` on the root to balance the columns again.
 
@@ -179,6 +196,12 @@ When focus is inside the grid, arrow keys move between items:
 | `ArrowDown` | Next item in the same column |
 | `ArrowLeft` | Item in the previous column at the same vertical position |
 | `ArrowRight` | Item in the next column at the same vertical position |
+
+When an item can get focus itself, for example with `tabindex="0"`, the item gets the focus. An item with `tabindex="-1"` also gets the focus: then only the arrow keys reach it, and the Tab key skips it. Otherwise its first link, button or field gets the focus.
+
+The grid does not use the arrow keys when focus is in a form field, such as an `input` or a `textarea`. An item can also use the arrow keys itself: when its handler calls `event.preventDefault()`, the grid does not move the focus.
+
+After a layout, the focused element in the grid keeps the focus.
 
 ![Keyboard navigation](./docs/examples/keyboard.gif)
 
