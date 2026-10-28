@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@mannisto/astro-masonry": "workspace:*",
-    "astro": "^6.1.9"
+    "astro": "^7.4.2"
   }
 }
