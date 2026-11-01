@@ -141,6 +141,8 @@ const minWidth =
     private resizeObserver: ResizeObserver;
     /** The root width of the last layout, from getRootWidth(). */
     private lastWidth: number;
+    /** The animation frame of the next layout after a resize. */
+    private resizeFrame: number;
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
     private boundHandleRefresh: (e: Event) => void;
 
@@ -154,6 +156,7 @@ const minWidth =
       this.columns = Array.from(root.querySelectorAll("[data-masonry-column]"));
       this.items = Array.from(this.slot.children) as HTMLElement[];
       this.lastWidth = -1;
+      this.resizeFrame = 0;
       this.boundHandleKeyDown = this.handleKeyDown.bind(this);
       this.boundHandleRefresh = this.handleRefresh.bind(this);
 
@@ -161,9 +164,7 @@ const minWidth =
       // content reflow, layout() itself moving items) keep the columns as they are, so
       // editing a value in the inspector does not make the items jump.
       this.resizeObserver = new ResizeObserver(() => {
-        if (this.getRootWidth() !== this.lastWidth) {
-          this.layout();
-        }
+        this.requestResizeLayout();
       });
 
       this.init();
@@ -652,12 +653,29 @@ const minWidth =
     }
 
     /**
+     * Lays out the grid in the next animation frame, if its width changed. A layout inside the
+     * ResizeObserver callback changes the size of the observed root, and the browser then
+     * reports a "ResizeObserver loop" error.
+     *
+     * @returns {void}
+     */
+    private requestResizeLayout(): void {
+      cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = requestAnimationFrame(() => {
+        if (this.getRootWidth() !== this.lastWidth) {
+          this.layout();
+        }
+      });
+    }
+
+    /**
      * Tears down observers attached by this instance.
      *
      * @returns {void}
      */
     public destroy(): void {
       this.resizeObserver.disconnect();
+      cancelAnimationFrame(this.resizeFrame);
       this.root.removeEventListener("keydown", this.boundHandleKeyDown);
       this.root.removeEventListener("masonry:refresh", this.boundHandleRefresh);
     }
