@@ -4,22 +4,15 @@
 
 ![Astro](https://img.shields.io/badge/astro-%232C2052.svg?style=for-the-badge&logo=astro&logoColor=white)
 ![npm version](https://img.shields.io/npm/v/@mannisto/astro-masonry?style=for-the-badge)
+![Astro version](https://img.shields.io/npm/dependency-version/@mannisto/astro-masonry/peer/astro?style=for-the-badge&label=astro)
 ![license](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
-Astro-native masonry layout component with shortest-column balancing, responsive breakpoints, and accessible arrow key navigation.
+A masonry grid for Astro. It puts each item into the shortest column, and changes the number of columns with the screen width. Keyboard users can move between the items with the arrow keys.
 
-## Installation
+## Install
 
 ```bash
 npm install @mannisto/astro-masonry
-```
-
-```bash
-pnpm add @mannisto/astro-masonry
-```
-
-```bash
-yarn add @mannisto/astro-masonry
 ```
 
 ## Usage
@@ -30,26 +23,28 @@ import { Masonry } from "@mannisto/astro-masonry/components"
 ---
 
 <Masonry autoColumns={280} columns={3}>
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
-`autoColumns` fills as many columns as the container fits at the given minimum width. `columns` caps the maximum at 3.
+`autoColumns` sets the minimum width of a column, and the grid shows as many columns as fit. `columns` sets the maximum, here 3.
 
 ## Props
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `columns` | `number` | `1` | Number of columns in fixed mode, or maximum cap when used with `autoColumns`. Defaults to unlimited when `autoColumns` is set |
-| `gap` | `number \| string` | `"1rem"` | Gap between items. Numbers are treated as `px` |
-| `breakpoints` | `Record<number, number>` | — | Map of `minWidth → columns`. Mobile-first, stacks on top of `columns` |
-| `autoColumns` | `number \| string` | — | Fill as many columns as fit at this minimum width. Numbers are treated as `px` |
-| `sequential` | `boolean` | `false` | Distribute items left to right, top to bottom instead of shortest-column |
-| `aria-label` | `string` | — | Sets `aria-label` on the root element |
-| `role` | `string` | — | Sets `role` on the root element |
-| `class` | `string` | — | Class names on the root element |
+| `columns` | `number` | `1` | The number of columns. With `autoColumns`, the maximum number of columns, and no maximum without it. |
+| `gap` | `number \| string` | `"1rem"` | The space between the items. A number is in `px`. |
+| `breakpoints` | `Record<number, number>` | — | The number of columns from a screen width, for example `{ 640: 2, 1024: 3 }`. |
+| `autoColumns` | `number \| string` | — | The minimum width of a column. The grid shows as many columns as fit. A number is in `px`. |
+| `sequential` | `boolean` | `false` | Puts the items in order, from left to right, in place of the shortest column. |
+| `aria-label` | `string` | — | The `aria-label` of the grid. |
+| `role` | `string` | — | The `role` of the grid. |
+| `class` | `string` | — | The classes of the grid. |
 
 ## Examples
 
@@ -57,60 +52,68 @@ import { Masonry } from "@mannisto/astro-masonry/components"
 
 ```astro
 <Masonry columns={3}>
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
 ![Balanced distribution](./docs/examples/balanced.png)
-*Items are distributed into the shortest column, keeping overall height balanced.*
+*Each item goes into the shortest column, so the columns stay about the same height.*
 
 ### Responsive columns
 
-`columns` sets the base, `breakpoints` adds on top. Keys are minimum viewport widths in `px`.
+`columns` sets the number of columns on small screens. `breakpoints` changes it from a screen width in `px`.
 
 ```astro
 <Masonry
   columns={1}
   breakpoints={{ 640: 2, 1024: 3 }}
 >
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
-### Auto-sizing columns
+### Columns from a minimum width
 
-Fills as many columns as the container fits at the given minimum width. Responds automatically to container resize.
+The grid shows as many columns as fit at the minimum width. When the width of the grid changes, the number of columns changes too.
 
 ```astro
 <Masonry autoColumns={280}>
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
-### Auto-sizing with a maximum
+### Columns from a minimum width, with a maximum
 
-`columns` limits the maximum number of columns when used with `autoColumns`.
+With `autoColumns`, `columns` sets the maximum number of columns.
 
 ```astro
 <Masonry
   autoColumns={280}
   columns={4}
 >
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
-### Auto-sizing with a responsive maximum
+### Columns from a minimum width, with a maximum for each screen width
 
-`breakpoints` can adjust the cap at different viewport widths.
+With `autoColumns`, `breakpoints` changes the maximum from a screen width.
 
 ```astro
 <Masonry
@@ -118,30 +121,34 @@ Fills as many columns as the container fits at the given minimum width. Responds
   columns={1}
   breakpoints={{ 640: 2, 1024: 4 }}
 >
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
 ### Sequential order
 
-Items are distributed left to right, top to bottom. Useful when reading order matters.
+The items go in order, from left to right and then down. Use it when the order of the items is important.
 
 ```astro
 <Masonry columns={3} sequential>
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
 
 ![Sequential distribution](./docs/examples/sequential.png)
-*Items are distributed left to right, top to bottom, preserving reading order.*
+*The items stay in their order, from left to right and then down.*
 
 ## Dynamic items
 
-Items can be added to the grid after initial render. Append them directly to any `[data-masonry-column]` element, then dispatch a `masonry:refresh` event on the root to redistribute:
+To add items after the page loads, append them to any `[data-masonry-column]` element. Then send a `masonry:refresh` event to the grid, and the grid places them again:
 
 ```js
 const root = document.querySelector("[data-masonry]")
@@ -153,30 +160,36 @@ column.appendChild(card)
 root.dispatchEvent(new CustomEvent("masonry:refresh"))
 ```
 
-When the width of the grid changes, the grid re-layouts automatically, and the new items are included without any extra steps.
+When the width of the grid changes, the grid places all items again, also the new ones.
 
-To remove an item, remove it from the DOM, then dispatch `masonry:refresh`. The grid drops items that are no longer in the document:
+To remove an item, remove it from the page, and then send `masonry:refresh`:
 
 ```js
 card.remove()
 root.dispatchEvent(new CustomEvent("masonry:refresh"))
 ```
 
-To change the order, send all the items in the new order in `detail.items`. The grid removes items that are not in the list. Items in the list that are not in the grid yet are added:
+To change the order, send all items in the new order in `detail.items`. The grid removes the items that are not in the list, and adds the items that are new:
 
 ```js
-root.dispatchEvent(new CustomEvent("masonry:refresh", { detail: { items: [third, first, second] } }))
+root.dispatchEvent(
+  new CustomEvent("masonry:refresh", {
+    detail: {
+      items: [third, first, second],
+    },
+  })
+)
 ```
 
 ## Layout updates
 
-The grid re-layouts when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
+The grid places the items again when its width changes, because the items then get a new height. A change in height alone does not move the items, for example an edit in the browser DevTools.
 
 During a layout, the grid keeps its current height, so the page keeps its scroll position.
 
 A grid can start hidden, for example with the `hidden` attribute. With `autoColumns`, a hidden grid gets one column. When it becomes visible, its width changes, and it lays out again.
 
-If the height of an item changes after the first layout, for example when a card opens or a lazy image loads, dispatch `masonry:refresh` on the root to balance the columns again.
+An item can change its height later, for example when a card opens or a lazy image loads. Then send `masonry:refresh` to the grid to balance the columns again.
 
 If the page can get a scrollbar, add `scrollbar-gutter: stable` to your page. A scrollbar that comes and goes changes the width of the grid, and a new layout can then add or remove the scrollbar again:
 
@@ -188,9 +201,9 @@ html {
 
 ## Keyboard navigation
 
-When focus is inside the grid, arrow keys move between items:
+When the focus is in the grid, the arrow keys move between the items:
 
-| Key | Behaviour |
+| Key | Moves to |
 |---|---|
 | `ArrowUp` | Previous item in the same column |
 | `ArrowDown` | Next item in the same column |
@@ -207,7 +220,7 @@ After a layout, the focused element in the grid keeps the focus.
 
 ## Accessibility
 
-Screen readers navigate items in column order, matching the visual layout. Use `aria-label` and `role` to identify the grid as a landmark or feed.
+Screen readers read the items column by column, in the same order as the screen shows them. Give the grid a name with `aria-label`, and a `role` such as `feed`:
 
 ```astro
 <Masonry
@@ -215,11 +228,17 @@ Screen readers navigate items in column order, matching the visual layout. Use `
   aria-label="Photo gallery"
   role="feed"
 >
-  {items.map((item) => (
-    <div>{item}</div>
-  ))}
+  {
+    items.map((item) => {
+      return <div>{item}</div>
+    })
+  }
 </Masonry>
 ```
+
+## Contributing
+
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) for the setup and the test commands. Report bugs and ideas in [GitHub issues](https://github.com/eremannisto/astro-masonry/issues).
 
 ## License
 
