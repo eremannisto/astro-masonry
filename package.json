@@ -1,6 +1,6 @@
 {
   "name": "@mannisto/astro-masonry",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A masonry layout component for Astro.",
   "license": "MIT",
   "type": "module",
